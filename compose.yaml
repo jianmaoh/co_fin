@@ -9,6 +9,23 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cofin -d cofin"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/cofin
+      DB_USER: cofin
+      DB_PASSWORD: cofin
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pgdata:

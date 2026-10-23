@@ -15,22 +15,33 @@
 
 ## 本機執行
 
-需要 Java 25。Maven 不用另外裝，專案內附 `./mvnw`。
-
-### 方法一：H2（不需要 Docker）
+### 方法一：全部用 Docker（只需要 Docker，不用裝 Java）
 
 ```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+docker compose up --build
 ```
 
-打開 http://localhost:8080 。資料存在 `./data/`，刪掉這個資料夾就能重來。
+會啟動 PostgreSQL 和網站，打開 http://localhost:8080 。按 Ctrl+C 停止；
+`docker compose down -v` 會連資料庫內容一起清掉。
 
-### 方法二：PostgreSQL（需要 Docker）
+### 方法二：進到 Java 容器裡操作（不用裝 Java）
 
 ```bash
-docker compose up -d        # 啟動 Postgres
-./mvnw spring-boot:run      # 預設連 localhost:5432/cofin
+docker run -it --rm -v "$PWD":/app -w /app -p 8080:8080 eclipse-temurin:25-jdk bash
+# 進到容器之後：
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev   # H2 模式
+./mvnw test                                             # 跑測試
 ```
+
+### 方法三：直接在電腦上跑（需要 Java 25）
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev   # H2，不需要 Docker
+# 或
+docker compose up -d postgres && ./mvnw spring-boot:run # 連 localhost:5432/cofin
+```
+
+H2 模式的資料存在 `./data/`，刪掉這個資料夾就能重來。
 
 ## 設定（環境變數）
 
