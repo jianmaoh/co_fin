@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>註冊 · Co-Fin</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<main class="card">
+    <h1>註冊</h1>
+
+    <form th:action="@{/register}" th:object="${form}" method="post" novalidate>
+        <label for="username">帳號</label>
+        <input id="username" type="text" th:field="*{username}" autocomplete="username"
+               th:classappend="${#fields.hasErrors('username')} ? 'invalid'">
+        <p class="field-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></p>
+        <p class="hint">3–20 個英文字母、數字或底線，不分大小寫</p>
+
+        <label for="password">密碼</label>
+        <input id="password" type="password" th:field="*{password}" autocomplete="new-password"
+               th:classappend="${#fields.hasErrors('password')} ? 'invalid'">
+        <p class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></p>
+
+        <label for="confirmPassword">確認密碼</label>
+        <input id="confirmPassword" type="password" th:field="*{confirmPassword}" autocomplete="new-password"
+               th:classappend="${#fields.hasErrors('confirmPassword')} ? 'invalid'">
+        <p class="field-error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></p>
+
+        <button type="submit">建立帳號</button>
+    </form>
+
+    <p class="muted">已經有帳號了？<a th:href="@{/login}">登入</a></p>
+</main>
+</body>
+</html>

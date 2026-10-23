@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>登入 · Co-Fin</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<main class="card">
+    <h1>登入</h1>
+
+    <p th:if="${param.registered}" class="notice success">註冊成功，請登入。</p>
+    <p th:if="${param.logout}" class="notice">你已經登出。</p>
+    <p th:if="${param.error}" class="notice error">帳號或密碼錯誤。</p>
+
+    <form th:action="@{/login}" method="post">
+        <label for="username">帳號</label>
+        <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+
+        <label for="password">密碼</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+        <button type="submit">登入</button>
+    </form>
+
+    <p class="muted">還沒有帳號？<a th:href="@{/register}">註冊</a></p>
+</main>
+</body>
+</html>

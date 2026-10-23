@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Co-Fin 咖啡廳收藏</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<main class="card">
+    <h1>☕ Co-Fin</h1>
+    <p class="subtitle">收藏你喜歡的咖啡廳</p>
+
+    <div sec:authorize="isAuthenticated()">
+        <p>歡迎回來，<strong sec:authentication="name">user</strong>！</p>
+        <p class="muted">咖啡廳收藏功能即將推出。</p>
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="secondary">登出</button>
+        </form>
+    </div>
+
+    <div sec:authorize="!isAuthenticated()" class="actions">
+        <a class="button" th:href="@{/login}">登入</a>
+        <a class="button secondary" th:href="@{/register}">註冊</a>
+    </div>
+</main>
+</body>
+</html>
