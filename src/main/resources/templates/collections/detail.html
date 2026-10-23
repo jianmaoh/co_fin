@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${collection.name()})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main class="page">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <p><a th:href="@{/collections}">← 我的清單</a></p>
+    <h1 th:text="${collection.name()}">清單</h1>
+
+    <section class="panel">
+        <p class="empty" th:if="${collection.items().isEmpty()}">
+            這個清單還是空的。到<a th:href="@{/cafes}">咖啡廳頁面</a>把喜歡的店加進來。
+        </p>
+        <ul class="item-list" th:unless="${collection.items().isEmpty()}">
+            <li th:each="item : ${collection.items()}">
+                <div>
+                    <a class="item-title" th:href="@{/cafes/{id}(id=${item.cafeId()})}" th:text="${item.cafeName()}">店名</a>
+                    <div class="muted" th:if="${item.address()}" th:text="${item.address()}">地址</div>
+                    <div th:if="${item.note()}" class="note" th:text="${item.note()}">備註</div>
+                </div>
+                <form th:action="@{/collections/{id}/items/{cafeId}/delete(id=${collection.id()},cafeId=${item.cafeId()})}" method="post">
+                    <button type="submit" class="secondary small">移除</button>
+                </form>
+            </li>
+        </ul>
+    </section>
+
+    <section class="panel">
+        <h2>清單設定</h2>
+        <form class="inline-form" th:action="@{/collections/{id}/rename(id=${collection.id()})}" method="post">
+            <input type="text" name="name" maxlength="30" th:value="${collection.name()}" aria-label="清單名稱" required>
+            <button type="submit" class="secondary">改名</button>
+        </form>
+        <form th:action="@{/collections/{id}/delete(id=${collection.id()})}" method="post"
+              onsubmit="return confirm('確定要刪除這個清單嗎？清單裡的收藏會一起刪除。');">
+            <button type="submit" class="danger">刪除清單</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

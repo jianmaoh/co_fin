@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('我的清單')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main class="page">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <h1>我的清單</h1>
+
+    <form class="inline-form" th:action="@{/collections}" method="post">
+        <input type="text" name="name" maxlength="30" placeholder="新清單名稱，例如：讀書用" aria-label="新清單名稱" required>
+        <button type="submit">建立清單</button>
+    </form>
+
+    <section class="panel">
+        <p class="empty" th:if="${collections.isEmpty()}">還沒有清單，從上面建立第一個吧。</p>
+        <ul class="item-list" th:unless="${collections.isEmpty()}">
+            <li th:each="c : ${collections}">
+                <a class="item-title" th:href="@{/collections/{id}(id=${c.id()})}" th:text="${c.name()}">清單</a>
+                <span class="muted" th:text="${c.itemCount()} + ' 家'">0 家</span>
+            </li>
+        </ul>
+    </section>
+</main>
+</body>
+</html>

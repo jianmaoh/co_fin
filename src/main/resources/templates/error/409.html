@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('請再試一次')}"></head>
+<body class="auth">
+<main class="card">
+    <h1>請再試一次</h1>
+    <p class="muted">同一時間有其他人修改了相同的資料。</p>
+    <a class="button" href="javascript:history.back()">返回</a>
+</main>
+</body>
+</html>

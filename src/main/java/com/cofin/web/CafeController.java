@@ -1,0 +1,98 @@
+package com.cofin.web;
+
+import com.cofin.cafe.CafeService;
+import com.cofin.cafe.CreateResult;
+import com.cofin.collection.CollectionService;
+import com.cofin.common.CurrentUser;
+import com.cofin.common.InvalidInputException;
+import com.cofin.user.AppUser;
+import jakarta.validation.Valid;
+import java.security.Principal;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+public class CafeController {
+
+    private final CafeService cafeService;
+    private final CollectionService collectionService;
+    private final CurrentUser currentUser;
+
+    public CafeController(CafeService cafeService, CollectionService collectionService, CurrentUser currentUser) {
+        this.cafeService = cafeService;
+        this.collectionService = collectionService;
+        this.currentUser = currentUser;
+    }
+
+    @GetMapping("/cafes")
+    public String list(@RequestParam(defaultValue = "") String q,
+                       @RequestParam(required = false) String tag,
+                       Model model) {
+        String activeTag = tag == null || tag.isBlank() ? null : tag;
+        model.addAttribute("q", q);
+        model.addAttribute("tag", activeTag);
+        model.addAttribute("cafes", cafeService.search(q, activeTag));
+        model.addAttribute("popularTags", cafeService.popularTags());
+        return "cafes/list";
+    }
+
+    @GetMapping("/cafes/new")
+    public String newForm(@ModelAttribute("form") CafeForm form) {
+        return "cafes/new";
+    }
+
+    @PostMapping("/cafes")
+    public String create(@Valid @ModelAttribute("form") CafeForm form, BindingResult result,
+                         Principal principal, RedirectAttributes redirect) {
+        if (result.hasErrors()) {
+            return "cafes/new";
+        }
+        AppUser me = currentUser.get(principal);
+        try {
+            CreateResult created = cafeService.create(form.getName(), form.getAddress(), me.getId());
+            redirect.addFlashAttribute("message", created.created() ? "已新增咖啡廳" : "這家咖啡廳已經有人新增過了");
+            return "redirect:/cafes/" + created.id();
+        } catch (InvalidInputException e) {
+            result.reject("invalid", e.getMessage());
+            return "cafes/new";
+        }
+    }
+
+    @GetMapping("/cafes/{id}")
+    public String detail(@PathVariable Long id, Principal principal, Model model) {
+        AppUser me = currentUser.get(principal);
+        model.addAttribute("cafe", cafeService.detail(id, me.getId()));
+        model.addAttribute("myCollections", collectionService.listFor(me.getId()));
+        model.addAttribute("savedIn", collectionService.collectionsContaining(me.getId(), id));
+        return "cafes/detail";
+    }
+
+    @PostMapping("/cafes/{id}/tags")
+    public String addTag(@PathVariable Long id, @RequestParam String name,
+                         Principal principal, RedirectAttributes redirect) {
+        try {
+            cafeService.addTag(id, currentUser.get(principal).getId(), name);
+        } catch (InvalidInputException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/cafes/" + id;
+    }
+
+    @PostMapping("/cafes/{id}/tags/remove")
+    public String removeTag(@PathVariable Long id, @RequestParam String name,
+                            Principal principal, RedirectAttributes redirect) {
+        try {
+            cafeService.removeTag(id, currentUser.get(principal).getId(), name);
+        } catch (InvalidInputException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/cafes/" + id;
+    }
+}

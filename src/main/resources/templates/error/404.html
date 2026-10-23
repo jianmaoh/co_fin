@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('找不到頁面')}"></head>
+<body class="auth">
+<main class="card">
+    <h1>找不到這個頁面</h1>
+    <p class="muted">它可能已經被刪除，或者不屬於你。</p>
+    <a class="button" th:href="@{/}">回首頁</a>
+</main>
+</body>
+</html>

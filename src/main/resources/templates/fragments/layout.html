@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · Co-Fin'">Co-Fin</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<header th:fragment="nav" class="topbar">
+    <a class="brand" th:href="@{/}">☕ Co-Fin</a>
+    <nav>
+        <a th:href="@{/cafes}">咖啡廳</a>
+        <a th:href="@{/collections}">我的清單</a>
+    </nav>
+    <div class="me">
+        <span sec:authentication="name">user</span>
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="link">登出</button>
+        </form>
+    </div>
+</header>
+
+<div th:fragment="flash">
+    <p th:if="${message}" class="notice success" th:text="${message}"></p>
+    <p th:if="${error}" class="notice error" th:text="${error}"></p>
+</div>
+
+</body>
+</html>

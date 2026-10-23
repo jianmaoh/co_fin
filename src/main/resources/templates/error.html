@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('發生錯誤')}"></head>
+<body class="auth">
+<main class="card">
+    <h1>發生錯誤</h1>
+    <p class="muted" th:text="${status} ? '錯誤代碼 ' + ${status} : '請稍後再試。'">請稍後再試。</p>
+    <a class="button" th:href="@{/}">回首頁</a>
+</main>
+</body>
+</html>

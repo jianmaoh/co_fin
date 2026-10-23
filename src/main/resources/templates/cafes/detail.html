@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${cafe.name()})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main class="page">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <p><a th:href="@{/cafes}">← 所有咖啡廳</a></p>
+    <h1 th:text="${cafe.name()}">店名</h1>
+    <p class="muted" th:if="${cafe.address()}" th:text="${cafe.address()}">地址</p>
+    <p><a th:href="${cafe.mapsUrl()}" target="_blank" rel="noopener noreferrer">在 Google Maps 開啟 ↗</a></p>
+
+    <section class="panel">
+        <h2>標籤</h2>
+        <p class="muted" th:if="${cafe.tags().isEmpty()}">還沒有人加標籤，當第一個吧。</p>
+        <div class="chips" th:unless="${cafe.tags().isEmpty()}">
+            <th:block th:each="t : ${cafe.tags()}">
+                <!-- Your own tag: click to remove your vote -->
+                <form th:if="${t.mine()}" class="chip mine" th:action="@{/cafes/{id}/tags/remove(id=${cafe.id()})}" method="post">
+                    <input type="hidden" name="name" th:value="${t.name()}">
+                    <span th:text="'#' + ${t.name()}">tag</span>
+                    <span class="count" th:text="${t.count()}">1</span>
+                    <button type="submit" th:title="'移除我的 #' + ${t.name()}" aria-label="移除">✕</button>
+                </form>
+                <!-- Someone else's tag: click to agree -->
+                <form th:unless="${t.mine()}" class="chip" th:action="@{/cafes/{id}/tags(id=${cafe.id()})}" method="post">
+                    <input type="hidden" name="name" th:value="${t.name()}">
+                    <span th:text="'#' + ${t.name()}">tag</span>
+                    <span class="count" th:text="${t.count()}">1</span>
+                    <button type="submit" th:title="'我也覺得是 #' + ${t.name()}" aria-label="我也加">＋</button>
+                </form>
+            </th:block>
+        </div>
+        <p class="hint">深色的是你加的標籤，按 ✕ 移除；按 ＋ 表示你也同意。</p>
+
+        <form class="inline-form" th:action="@{/cafes/{id}/tags(id=${cafe.id()})}" method="post">
+            <input type="text" name="name" maxlength="20" placeholder="例如：安靜、有插座、不限時" aria-label="新標籤" required>
+            <button type="submit">加標籤</button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>收藏</h2>
+        <p th:unless="${savedIn.isEmpty()}">
+            已收藏在：
+            <th:block th:each="c, stat : ${savedIn}">
+                <a th:href="@{/collections/{id}(id=${c.id()})}" th:text="${c.name()}">清單</a><span th:unless="${stat.last}">、</span>
+            </th:block>
+        </p>
+
+        <p class="muted" th:if="${myCollections.isEmpty()}">
+            你還沒有清單。<a th:href="@{/collections}">先建立一個</a>
+        </p>
+        <form class="inline-form" th:unless="${myCollections.isEmpty()}" th:action="@{/collections/items}" method="post">
+            <input type="hidden" name="cafeId" th:value="${cafe.id()}">
+            <select name="collectionId" aria-label="選擇清單">
+                <option th:each="c : ${myCollections}" th:value="${c.id()}" th:text="${c.name()}">清單</option>
+            </select>
+            <input type="text" name="note" maxlength="200" placeholder="備註（選填）" aria-label="備註">
+            <button type="submit">加入清單</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

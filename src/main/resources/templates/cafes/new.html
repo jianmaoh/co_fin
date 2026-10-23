@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('新增咖啡廳')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main class="page narrow">
+    <h1>新增咖啡廳</h1>
+
+    <section class="panel">
+        <form class="stack" th:action="@{/cafes}" th:object="${form}" method="post" novalidate>
+            <p class="notice error" th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></p>
+
+            <label for="name">店名</label>
+            <input id="name" type="text" th:field="*{name}" maxlength="100" autofocus
+                   th:classappend="${#fields.hasErrors('name')} ? 'invalid'">
+            <p class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
+
+            <label for="address">地址 <span class="muted">（選填）</span></label>
+            <input id="address" type="text" th:field="*{address}" maxlength="200"
+                   th:classappend="${#fields.hasErrors('address')} ? 'invalid'">
+            <p class="field-error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></p>
+            <p class="hint">店名和地址都相同的咖啡廳只會有一筆。</p>
+
+            <div class="actions">
+                <button type="submit">新增</button>
+                <a class="button secondary" th:href="@{/cafes}">取消</a>
+            </div>
+        </form>
+    </section>
+</main>
+</body>
+</html>
