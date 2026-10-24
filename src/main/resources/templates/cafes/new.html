@@ -6,9 +6,19 @@
 <main class="page narrow">
     <h1>新增咖啡廳</h1>
 
+    <section class="panel" th:if="${mapsApiKey}">
+        <h2>從 Google Maps 搜尋</h2>
+        <div id="place-search" class="place-search"></div>
+        <p id="place-status" class="hint">輸入店名，選擇之後會自動填入下面的資料。</p>
+        <button type="button" id="place-clear" class="link" hidden>取消選擇的 Google 地點</button>
+    </section>
+
     <section class="panel">
-        <form class="stack" th:action="@{/cafes}" th:object="${form}" method="post" novalidate>
+        <h2 th:if="${mapsApiKey}">確認資料（也可以直接手動輸入）</h2>
+        <form id="cafe-form" class="stack" th:action="@{/cafes}" th:object="${form}" method="post" novalidate>
             <p class="notice error" th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></p>
+            <p class="field-error" th:if="${#fields.hasErrors('placeId')}" th:errors="*{placeId}"></p>
+            <input type="hidden" th:field="*{placeId}">
 
             <label for="name">店名</label>
             <input id="name" type="text" th:field="*{name}" maxlength="100" autofocus
@@ -28,5 +38,6 @@
         </form>
     </section>
 </main>
+<th:block th:replace="~{fragments/layout :: mapsScripts}"></th:block>
 </body>
 </html>

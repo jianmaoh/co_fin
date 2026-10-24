@@ -383,3 +383,18 @@ a.chip:hover {
 .count {
     opacity: 0.7;
 }
+
+/* ---------- Google Maps ---------- */
+
+.place-search gmp-place-autocomplete {
+    width: 100%;
+    color-scheme: light;
+}
+
+.map {
+    height: 280px;
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+}

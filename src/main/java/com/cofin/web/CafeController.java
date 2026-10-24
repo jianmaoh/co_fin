@@ -56,7 +56,7 @@ public class CafeController {
         }
         AppUser me = currentUser.get(principal);
         try {
-            CreateResult created = cafeService.create(form.getName(), form.getAddress(), me.getId());
+            CreateResult created = cafeService.create(form.getName(), form.getAddress(), form.getPlaceId(), me.getId());
             redirect.addFlashAttribute("message", created.created() ? "已新增咖啡廳" : "這家咖啡廳已經有人新增過了");
             return "redirect:/cafes/" + created.id();
         } catch (InvalidInputException e) {

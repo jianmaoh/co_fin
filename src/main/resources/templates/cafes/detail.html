@@ -11,6 +11,11 @@
     <p class="muted" th:if="${cafe.address()}" th:text="${cafe.address()}">地址</p>
     <p><a th:href="${cafe.mapsUrl()}" target="_blank" rel="noopener noreferrer">在 Google Maps 開啟 ↗</a></p>
 
+    <th:block th:if="${mapsApiKey != null and cafe.googlePlaceId() != null}">
+        <div id="cafe-map" class="map" th:data-place-id="${cafe.googlePlaceId()}" th:data-name="${cafe.name()}"></div>
+        <p id="map-status" class="hint"></p>
+    </th:block>
+
     <section class="panel">
         <h2>標籤</h2>
         <p class="muted" th:if="${cafe.tags().isEmpty()}">還沒有人加標籤，當第一個吧。</p>
@@ -62,5 +67,8 @@
         </form>
     </section>
 </main>
+<th:block th:if="${cafe.googlePlaceId() != null}">
+    <th:block th:replace="~{fragments/layout :: mapsScripts}"></th:block>
+</th:block>
 </body>
 </html>

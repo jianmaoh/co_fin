@@ -67,19 +67,33 @@ public class CafeService {
         return cafeTags.findPopular(PageRequest.of(0, POPULAR_TAG_LIMIT));
     }
 
-    /** Reuses an existing cafe with the same name and address (case-insensitive) instead of duplicating it. */
     @Transactional
     public CreateResult create(String rawName, String rawAddress, Long userId) {
+        return create(rawName, rawAddress, null, userId);
+    }
+
+    /**
+     * Reuses an existing cafe instead of duplicating it: the same Google place id,
+     * or (for cafes typed in by hand) the same name and address, case-insensitive.
+     */
+    @Transactional
+    public CreateResult create(String rawName, String rawAddress, String rawPlaceId, Long userId) {
         String name = Names.required(rawName, 100, "店名");
         String address = Names.optional(rawAddress, 200, "地址");
+        String placeId = Names.optional(rawPlaceId, 255, "Google 地點");
 
-        Optional<Cafe> existing = address == null
-                ? cafes.findFirstByNameIgnoreCaseAndAddressIsNull(name)
-                : cafes.findFirstByNameIgnoreCaseAndAddressIgnoreCase(name, address);
+        Optional<Cafe> existing;
+        if (placeId != null) {
+            existing = cafes.findByGooglePlaceId(placeId);
+        } else if (address == null) {
+            existing = cafes.findFirstByNameIgnoreCaseAndAddressIsNull(name);
+        } else {
+            existing = cafes.findFirstByNameIgnoreCaseAndAddressIgnoreCase(name, address);
+        }
         if (existing.isPresent()) {
             return new CreateResult(existing.get().getId(), false);
         }
-        Cafe saved = cafes.save(new Cafe(name, address, users.getReferenceById(userId)));
+        Cafe saved = cafes.save(new Cafe(name, address, placeId, users.getReferenceById(userId)));
         return new CreateResult(saved.getId(), true);
     }
 
@@ -89,7 +103,8 @@ public class CafeService {
         List<TagView> tagViews = cafeTags.countByCafeIds(List.of(cafeId)).stream()
                 .map(tc -> new TagView(tc.name(), tc.count(), mine.contains(tc.name())))
                 .toList();
-        return new CafeDetail(cafe.getId(), cafe.getName(), cafe.getAddress(), mapsUrl(cafe), tagViews);
+        return new CafeDetail(cafe.getId(), cafe.getName(), cafe.getAddress(), cafe.getGooglePlaceId(),
+                mapsUrl(cafe), tagViews);
     }
 
     /** Idempotent: adding a tag you already added is a no-op. */

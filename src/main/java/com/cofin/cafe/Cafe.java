@@ -26,7 +26,7 @@ public class Cafe {
     @Column(length = 200)
     private String address;
 
-    /** Filled in once cafes can be picked from Google Maps. */
+    /** Set when the cafe was picked from Google Maps; null for cafes typed in by hand. */
     @Column(name = "google_place_id", unique = true)
     private String googlePlaceId;
 
@@ -42,8 +42,13 @@ public class Cafe {
     }
 
     public Cafe(String name, String address, AppUser createdBy) {
+        this(name, address, null, createdBy);
+    }
+
+    public Cafe(String name, String address, String googlePlaceId, AppUser createdBy) {
         this.name = name;
         this.address = address;
+        this.googlePlaceId = googlePlaceId;
         this.createdBy = createdBy;
         this.createdAt = Instant.now();
     }

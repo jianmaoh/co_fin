@@ -108,6 +108,15 @@ class CafeAndCollectionFlowTest {
     }
 
     @Test
+    void withoutMapsKeyThePageOffersManualInputOnly() throws Exception {
+        mvc.perform(get("/cafes/new").with(ALICE))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("name=\"name\"")))
+                .andExpect(content().string(not(containsString("place-search"))))
+                .andExpect(content().string(not(containsString("maps.googleapis.com"))));
+    }
+
+    @Test
     void unknownCafeIs404() throws Exception {
         mvc.perform(get("/cafes/999999").with(ALICE)).andExpect(status().isNotFound());
     }

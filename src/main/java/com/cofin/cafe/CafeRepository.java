@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface CafeRepository extends JpaRepository<Cafe, Long> {
 
+    Optional<Cafe> findByGooglePlaceId(String googlePlaceId);
+
     Optional<Cafe> findFirstByNameIgnoreCaseAndAddressIgnoreCase(String name, String address);
 
     Optional<Cafe> findFirstByNameIgnoreCaseAndAddressIsNull(String name);
