@@ -19,11 +19,6 @@ public class AuthController {
         this.userService = userService;
     }
 
-    @GetMapping("/")
-    public String home() {
-        return "home";
-    }
-
     @GetMapping("/login")
     public String login(Principal principal) {
         return principal != null ? "redirect:/" : "login";

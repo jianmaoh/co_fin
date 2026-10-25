@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('咖啡廳收藏')}"></head>
+<body class="auth">
+<main class="card">
+    <p class="eyebrow">Coffee · Finder</p>
+    <h1>☕ Co-Fin</h1>
+    <p class="subtitle">找附近的咖啡廳，收藏你喜歡的店，看看大家怎麼形容它們。</p>
+    <div class="actions">
+        <a class="button" th:href="@{/login}">登入</a>
+        <a class="button secondary" th:href="@{/register}">註冊</a>
+    </div>
+</main>
+</body>
+</html>

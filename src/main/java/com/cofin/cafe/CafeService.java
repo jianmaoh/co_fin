@@ -6,6 +6,7 @@ import com.cofin.common.NotFoundException;
 import com.cofin.user.AppUserRepository;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -54,12 +55,22 @@ public class CafeService {
             found = cafes.searchByNameAndTag(pattern, normalized.get(), page);
         }
 
-        Map<Long, List<TagCount>> tagsByCafe = tagCountsFor(found.stream().map(Cafe::getId).toList());
+        Map<Long, List<TagCount>> tagsByCafe = topTagsFor(found.stream().map(Cafe::getId).toList());
         return found.stream()
                 .map(c -> new CafeSummary(c.getId(), c.getName(), c.getAddress(),
-                        tagsByCafe.getOrDefault(c.getId(), List.of()).stream()
-                                .limit(TAGS_PER_CAFE_IN_LIST)
-                                .toList()))
+                        tagsByCafe.getOrDefault(c.getId(), List.of())))
+                .toList();
+    }
+
+    /** Which of these Google places are already in Co-Fin, with their top tags. */
+    public List<PlaceMatch> findByPlaceIds(Collection<String> placeIds) {
+        if (placeIds.isEmpty()) {
+            return List.of();
+        }
+        List<Cafe> found = cafes.findByGooglePlaceIdIn(placeIds);
+        Map<Long, List<TagCount>> tagsByCafe = topTagsFor(found.stream().map(Cafe::getId).toList());
+        return found.stream()
+                .map(c -> new PlaceMatch(c.getGooglePlaceId(), c.getId(), tagsByCafe.getOrDefault(c.getId(), List.of())))
                 .toList();
     }
 
@@ -134,14 +145,17 @@ public class CafeService {
         return cafes.findById(cafeId).orElseThrow(() -> new NotFoundException("找不到這家咖啡廳"));
     }
 
-    private Map<Long, List<TagCount>> tagCountsFor(List<Long> cafeIds) {
+    /** The most-agreed tags of each cafe, in one query for all of them (avoids N+1). */
+    public Map<Long, List<TagCount>> topTagsFor(List<Long> cafeIds) {
         if (cafeIds.isEmpty()) {
             return Map.of();
         }
         // Rows arrive sorted by count, and groupingBy into lists keeps that order per cafe.
-        return cafeTags.countByCafeIds(cafeIds).stream()
+        Map<Long, List<TagCount>> all = cafeTags.countByCafeIds(cafeIds).stream()
                 .collect(Collectors.groupingBy(CafeTagCount::cafeId, LinkedHashMap::new,
                         Collectors.mapping(c -> new TagCount(c.name(), c.count()), Collectors.toList())));
+        all.replaceAll((id, tags) -> tags.stream().limit(TAGS_PER_CAFE_IN_LIST).toList());
+        return all;
     }
 
     private static Optional<String> tryNormalizeTag(String raw) {

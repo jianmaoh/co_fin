@@ -72,6 +72,16 @@ class MapsPagesTest {
     }
 
     @Test
+    void homeOffersNearbySearchWithCsrfTokenForAddingCafes() throws Exception {
+        mvc.perform(get("/").with(user("alice")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"nearby-button\"")))
+                .andExpect(content().string(containsString("id=\"csrf-token\" name=\"_csrf\"")))
+                .andExpect(content().string(containsString("data-lookup-url=\"/api/cafes/by-place\"")))
+                .andExpect(content().string(containsString("maps.googleapis.com/maps/api/js")));
+    }
+
+    @Test
     void cafeFromGoogleShowsMap() throws Exception {
         Long id = cafeService.create("貓下去", "台北市大安區", PLACE_ID, alice.getId()).id();
 

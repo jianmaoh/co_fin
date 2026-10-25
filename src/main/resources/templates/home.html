@@ -1,32 +1,61 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Co-Fin 咖啡廳收藏</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}">
-</head>
-<body class="auth">
-<main class="card">
-    <h1>☕ Co-Fin</h1>
-    <p class="subtitle">收藏你喜歡的咖啡廳</p>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('首頁')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main class="page">
+    <div th:replace="~{fragments/layout :: flash}"></div>
 
-    <div sec:authorize="isAuthenticated()">
-        <p>歡迎回來，<strong sec:authentication="name">user</strong>！</p>
-        <div class="actions">
-            <a class="button" th:href="@{/cafes}">逛咖啡廳</a>
-            <a class="button secondary" th:href="@{/collections}">我的清單</a>
-        </div>
-        <form th:action="@{/logout}" method="post">
-            <button type="submit" class="link logout">登出</button>
-        </form>
-    </div>
+    <section class="hero">
+        <p class="eyebrow">Nearby</p>
+        <h1>附近的咖啡廳</h1>
+        <p>用你現在的位置，找 1.5 公里內的咖啡廳，順便看看 Co-Fin 的大家幫它們加了哪些標籤。</p>
 
-    <div sec:authorize="!isAuthenticated()" class="actions">
-        <a class="button" th:href="@{/login}">登入</a>
-        <a class="button secondary" th:href="@{/register}">註冊</a>
-    </div>
+        <th:block th:if="${mapsApiKey}">
+            <button type="button" id="nearby-button">📍 找附近的咖啡廳</button>
+            <p id="nearby-status" class="hero-status" role="status"></p>
+        </th:block>
+        <p th:unless="${mapsApiKey}" class="hero-status">
+            需要設定 Google Maps 金鑰才能找附近的咖啡廳，設定方式請看 README。
+        </p>
+    </section>
+
+    <section class="panel" id="nearby-panel" hidden>
+        <h2>距離由近到遠</h2>
+        <ul id="nearby-list" class="item-list"
+            th:data-lookup-url="@{/api/cafes/by-place}"
+            th:data-create-url="@{/cafes}"
+            th:data-cafe-url="@{/cafes/}"></ul>
+        <!-- Used by maps.js to submit "加入 Co-Fin" with a CSRF token -->
+        <input type="hidden" id="csrf-token" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    </section>
+
+    <section class="panel">
+        <h2>Co-Fin 熱門咖啡廳</h2>
+        <p class="empty" th:if="${popular.isEmpty()}">
+            還沒有熱門的店。<a th:href="@{/cafes}">去幫咖啡廳加標籤或收藏吧</a>
+        </p>
+        <ol class="item-list ranked" th:unless="${popular.isEmpty()}">
+            <li th:each="c, stat : ${popular}">
+                <span class="rank" th:text="${stat.count}">1</span>
+                <div class="grow">
+                    <a class="item-title" th:href="@{/cafes/{id}(id=${c.id()})}" th:text="${c.name()}">店名</a>
+                    <div class="muted" th:if="${c.address()}" th:text="${c.address()}">地址</div>
+                    <div class="chips" th:unless="${c.tags().isEmpty()}">
+                        <span class="chip" th:each="t : ${c.tags()}">
+                            <span th:text="'#' + ${t.name()}">tag</span>
+                            <span class="count" th:text="${t.count()}">1</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="stats">
+                    <span th:text="${c.saves()} + ' 收藏'">0 收藏</span>
+                    <span th:text="${c.votes()} + ' 標籤'">0 標籤</span>
+                </div>
+            </li>
+        </ol>
+    </section>
 </main>
+<th:block th:replace="~{fragments/layout :: mapsScripts}"></th:block>
 </body>
 </html>

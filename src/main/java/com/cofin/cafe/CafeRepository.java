@@ -1,5 +1,6 @@
 package com.cofin.cafe;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 public interface CafeRepository extends JpaRepository<Cafe, Long> {
 
     Optional<Cafe> findByGooglePlaceId(String googlePlaceId);
+
+    List<Cafe> findByGooglePlaceIdIn(Collection<String> googlePlaceIds);
 
     Optional<Cafe> findFirstByNameIgnoreCaseAndAddressIgnoreCase(String name, String address);
 

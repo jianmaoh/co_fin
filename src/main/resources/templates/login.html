@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>登入 · Co-Fin</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}">
-</head>
+<head th:replace="~{fragments/layout :: head('登入')}"></head>
 <body class="auth">
 <main class="card">
     <h1>登入</h1>
