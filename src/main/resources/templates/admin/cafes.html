@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('審核咖啡廳')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main class="page">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <p class="eyebrow">Admin</p>
+    <h1>待審核的咖啡廳</h1>
+    <p class="muted">核准之後，新增者就不能再刪除這家店，只有管理員可以管理。</p>
+
+    <section class="panel">
+        <p class="empty" th:if="${pending.isEmpty()}">目前沒有待審核的咖啡廳。</p>
+        <ul class="item-list" th:unless="${pending.isEmpty()}">
+            <li th:each="c : ${pending}">
+                <div class="grow">
+                    <a class="item-title" th:href="@{/cafes/{id}(id=${c.id()})}" th:text="${c.name()}">店名</a>
+                    <div class="muted" th:text="${c.address()}">地址</div>
+                    <div class="hint" th:text="'新增者：' + (${c.createdBy()} ?: '（帳號已刪除）')">新增者</div>
+                </div>
+                <div class="row-actions">
+                    <form th:action="@{/admin/cafes/{id}/approve(id=${c.id()})}" method="post">
+                        <button type="submit" class="small">核准</button>
+                    </form>
+                    <form th:action="@{/admin/cafes/{id}/delete(id=${c.id()})}" method="post"
+                          onsubmit="return confirm('確定要刪除這家咖啡廳嗎？相關的標籤、收藏和評論都會一起刪除。');">
+                        <button type="submit" class="small danger">刪除</button>
+                    </form>
+                </div>
+            </li>
+        </ul>
+    </section>
+</main>
+</body>
+</html>

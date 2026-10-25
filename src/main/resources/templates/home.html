@@ -1,60 +1,67 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('首頁')}"></head>
-<body>
+<head th:replace="~{fragments/layout :: head('附近的咖啡廳')}"></head>
+<body class="app-shell">
 <header th:replace="~{fragments/layout :: nav}"></header>
-<main class="page">
-    <div th:replace="~{fragments/layout :: flash}"></div>
+<main class="explorer" th:classappend="${mapsApiKey == null} ? 'no-map'">
+    <!-- Left: map. maps.js asks for the location as soon as the map loads. -->
+    <div class="explorer-map" th:if="${mapsApiKey}">
+        <div id="explore-map" class="map-canvas" th:data-map-id="${mapsMapId}"></div>
+    </div>
 
-    <section class="hero">
-        <p class="eyebrow">Nearby</p>
-        <h1>附近的咖啡廳</h1>
-        <p>用你現在的位置，找 1.5 公里內的咖啡廳，順便看看 Co-Fin 的大家幫它們加了哪些標籤。</p>
+    <!-- Right: list -->
+    <aside class="explorer-list">
+        <div th:replace="~{fragments/layout :: flash}"></div>
 
-        <th:block th:if="${mapsApiKey}">
-            <button type="button" id="nearby-button">📍 找附近的咖啡廳</button>
-            <p id="nearby-status" class="hero-status" role="status"></p>
-        </th:block>
-        <p th:unless="${mapsApiKey}" class="hero-status">
-            需要設定 Google Maps 金鑰才能找附近的咖啡廳，設定方式請看 README。
-        </p>
-    </section>
+        <div class="list-header">
+            <div>
+                <p class="eyebrow">Nearby · 1.5 km</p>
+                <h1>附近的咖啡廳</h1>
+            </div>
+            <a class="button small secondary" th:href="@{/cafes/new}">＋ 新增</a>
+        </div>
 
-    <section class="panel" id="nearby-panel" hidden>
-        <h2>距離由近到遠</h2>
-        <ul id="nearby-list" class="item-list"
+        <p id="nearby-status" class="status" role="status" th:if="${mapsApiKey}">正在取得你的位置…</p>
+        <p class="status" th:unless="${mapsApiKey}">需要設定 Google Maps 金鑰才能找附近的咖啡廳，設定方式請看 README。</p>
+
+        <ul id="nearby-list" class="item-list nearby"
             th:data-lookup-url="@{/api/cafes/by-place}"
             th:data-create-url="@{/cafes}"
             th:data-cafe-url="@{/cafes/}"></ul>
         <!-- Used by maps.js to submit "加入 Co-Fin" with a CSRF token -->
         <input type="hidden" id="csrf-token" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-    </section>
 
-    <section class="panel">
-        <h2>Co-Fin 熱門咖啡廳</h2>
-        <p class="empty" th:if="${popular.isEmpty()}">
-            還沒有熱門的店。<a th:href="@{/cafes}">去幫咖啡廳加標籤或收藏吧</a>
-        </p>
-        <ol class="item-list ranked" th:unless="${popular.isEmpty()}">
-            <li th:each="c, stat : ${popular}">
-                <span class="rank" th:text="${stat.count}">1</span>
-                <div class="grow">
-                    <a class="item-title" th:href="@{/cafes/{id}(id=${c.id()})}" th:text="${c.name()}">店名</a>
-                    <div class="muted" th:if="${c.address()}" th:text="${c.address()}">地址</div>
-                    <div class="chips" th:unless="${c.tags().isEmpty()}">
-                        <span class="chip" th:each="t : ${c.tags()}">
-                            <span th:text="'#' + ${t.name()}">tag</span>
-                            <span class="count" th:text="${t.count()}">1</span>
-                        </span>
+        <section class="list-section">
+            <h2>Co-Fin 熱門</h2>
+            <p class="empty" th:if="${popular.isEmpty()}">
+                還沒有熱門的店。<a th:href="@{/cafes}">去幫咖啡廳加標籤或收藏吧</a>
+            </p>
+            <ol class="item-list ranked" th:unless="${popular.isEmpty()}">
+                <li th:each="c, stat : ${popular}">
+                    <span class="rank" th:text="${stat.count}">1</span>
+                    <div class="grow">
+                        <a class="item-title" th:href="@{/cafes/{id}(id=${c.id()})}" th:text="${c.name()}">店名</a>
+                        <div class="rating-line" th:if="${c.reviewCount() > 0}">
+                            <span class="star">★</span>
+                            <span th:text="${#numbers.formatDecimal(c.averageRating(), 1, 1)}">4.5</span>
+                            <span class="muted" th:text="'(' + ${c.reviewCount()} + ')'">(3)</span>
+                        </div>
+                        <div class="muted" th:if="${c.address()}" th:text="${c.address()}">地址</div>
+                        <div class="chips" th:unless="${c.tags().isEmpty()}">
+                            <span class="chip" th:each="t : ${c.tags()}">
+                                <span th:text="'#' + ${t.name()}">tag</span>
+                                <span class="count" th:text="${t.count()}">1</span>
+                            </span>
+                        </div>
                     </div>
-                </div>
-                <div class="stats">
-                    <span th:text="${c.saves()} + ' 收藏'">0 收藏</span>
-                    <span th:text="${c.votes()} + ' 標籤'">0 標籤</span>
-                </div>
-            </li>
-        </ol>
-    </section>
+                    <div class="stats">
+                        <span th:text="${c.saves()} + ' 收藏'">0 收藏</span>
+                        <span th:text="${c.votes()} + ' 標籤'">0 標籤</span>
+                    </div>
+                </li>
+            </ol>
+        </section>
+    </aside>
 </main>
 <th:block th:replace="~{fragments/layout :: mapsScripts}"></th:block>
 </body>

@@ -37,6 +37,14 @@ public class Cafe {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    /** Null while pending; set when an admin approves the cafe. */
+    @Column(name = "approved_at")
+    private Instant approvedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by")
+    private AppUser approvedBy;
+
     protected Cafe() {
         // required by JPA
     }
@@ -75,5 +83,25 @@ public class Cafe {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isApproved() {
+        return approvedAt != null;
+    }
+
+    public void approve(AppUser admin) {
+        this.approvedAt = Instant.now();
+        this.approvedBy = admin;
+    }
+
+    /**
+     * Admins can delete any cafe. The creator can delete their own cafe only while it is pending;
+     * once approved it becomes shared data that only admins manage.
+     */
+    public boolean canBeDeletedBy(AppUser user) {
+        if (user.isAdmin()) {
+            return true;
+        }
+        return !isApproved() && createdBy != null && createdBy.getId().equals(user.getId());
     }
 }

@@ -25,6 +25,8 @@ services:
       DB_PASSWORD: cofin
       # Read from the .env file next to this compose.yaml (never committed).
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      GOOGLE_MAPS_MAP_ID: ${GOOGLE_MAPS_MAP_ID:-}
+      ADMIN_USERNAMES: ${ADMIN_USERNAMES:-}
     depends_on:
       postgres:
         condition: service_healthy

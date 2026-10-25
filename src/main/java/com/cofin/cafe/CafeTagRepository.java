@@ -31,6 +31,15 @@ public interface CafeTagRepository extends JpaRepository<CafeTag, Long> {
             """)
     List<String> findTagNames(Long cafeId, Long userId);
 
+    /** Who added which tag to a cafe; used to list each person's tags next to their review. */
+    @Query("""
+            select new com.cofin.cafe.UserTag(u.username, t.name)
+            from CafeTag ct join ct.user u join ct.tag t
+            where ct.cafe.id = :cafeId
+            order by u.username, t.name
+            """)
+    List<UserTag> findUserTags(Long cafeId);
+
     @Query("""
             select new com.cofin.cafe.TagCount(t.name, count(ct.id))
             from CafeTag ct join ct.tag t

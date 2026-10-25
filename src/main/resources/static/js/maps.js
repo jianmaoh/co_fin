@@ -1,18 +1,22 @@
 // Google Maps integration. Google's script tag calls coFinMapsReady once the API has loaded.
 // Every page works without this script: it only enhances elements that are present.
 
+const DEFAULT_CENTER = { lat: 25.0418, lng: 121.5437 }; // Taipei, used until we know where the user is
+const NEARBY_RADIUS_METERS = 1500;
+const NEARBY_MAX_RESULTS = 20; // the most Nearby Search returns in one call
+
 window.coFinMapsReady = async function () {
     const search = document.getElementById('place-search');
     if (search) {
         await run(() => setUpPlaceSearch(search), 'place-status');
     }
-    const map = document.getElementById('cafe-map');
-    if (map) {
-        await run(() => showCafeMap(map), 'map-status');
+    const cafeMap = document.getElementById('cafe-map');
+    if (cafeMap) {
+        await run(() => showCafeMap(cafeMap), 'map-status');
     }
-    const nearbyButton = document.getElementById('nearby-button');
-    if (nearbyButton) {
-        setUpNearby(nearbyButton);
+    const exploreMap = document.getElementById('explore-map');
+    if (exploreMap) {
+        await run(() => setUpExplorer(exploreMap), 'nearby-status');
     }
 };
 
@@ -28,7 +32,7 @@ async function run(task, statusId) {
         await task();
     } catch (e) {
         console.error(e);
-        showStatus(statusId, 'Google Maps 載入失敗，請稍後再試，或手動輸入。', true);
+        showStatus(statusId, 'Google Maps 載入失敗，請稍後再試。', true);
     }
 }
 
@@ -40,6 +44,38 @@ function showStatus(id, text, isError) {
     el.textContent = text;
     el.classList.toggle('field-error', Boolean(isError));
 }
+
+/**
+ * A map with the site's dark look. With a custom Map ID (GOOGLE_MAPS_MAP_ID) its cloud style is used
+ * as-is; otherwise Google's demo Map ID with the built-in dark color scheme.
+ */
+async function createMap(container, options) {
+    const { Map } = await google.maps.importLibrary('maps');
+    const customMapId = container.dataset.mapId;
+    const config = {
+        mapId: customMapId || 'DEMO_MAP_ID',
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        clickableIcons: false,
+        ...options,
+    };
+    if (!customMapId) {
+        const { ColorScheme } = await google.maps.importLibrary('core');
+        if (ColorScheme) {
+            config.colorScheme = ColorScheme.DARK;
+        }
+    }
+    return new Map(container, config);
+}
+
+function pinElement(extraClass) {
+    const pin = element('div', 'map-pin' + (extraClass ? ' ' + extraClass : ''));
+    pin.append(element('span', 'map-pin-dot'));
+    return pin;
+}
+
+// ---------- new-cafe page: Google place search ----------
 
 async function setUpPlaceSearch(container) {
     const { PlaceAutocompleteElement } = await google.maps.importLibrary('places');
@@ -74,9 +110,10 @@ async function setUpPlaceSearch(container) {
     });
 }
 
+// ---------- cafe page: single map with a hover card ----------
+
 async function showCafeMap(container) {
-    const [{ Map }, { AdvancedMarkerElement }, { Place }] = await Promise.all([
-        google.maps.importLibrary('maps'),
+    const [{ AdvancedMarkerElement }, { Place }] = await Promise.all([
         google.maps.importLibrary('marker'),
         google.maps.importLibrary('places'),
     ]);
@@ -85,68 +122,73 @@ async function showCafeMap(container) {
     const place = new Place({ id: container.dataset.placeId });
     await place.fetchFields({ fields: ['location'] });
 
-    const map = new Map(container, {
-        center: place.location,
-        zoom: 16,
-        mapId: 'DEMO_MAP_ID',
-        mapTypeControl: false,
-        streetViewControl: false,
+    const map = await createMap(container, { center: place.location, zoom: 16 });
+    const pin = pinElement('in-cofin');
+    const marker = new AdvancedMarkerElement({ map, position: place.location, content: pin, gmpClickable: true });
+
+    const card = infoCard({
+        name: container.dataset.name,
+        address: container.dataset.address,
+        rating: container.dataset.rating,
+        reviewCount: Number(container.dataset.reviewCount || 0),
+        tags: (container.dataset.tags || '').split(',').filter(Boolean),
     });
-    new AdvancedMarkerElement({ map, position: place.location, title: container.dataset.name });
+    const info = new google.maps.InfoWindow({ headerDisabled: true, content: card });
+    const open = () => info.open({ map, anchor: marker, shouldFocus: false });
+    pin.addEventListener('mouseenter', open);
+    marker.addListener('click', open);
+    map.addListener('click', () => info.close());
 }
 
-// ---------- nearby recommendations (home page) ----------
+// ---------- home page: nearby explorer ----------
 
-const NEARBY_RADIUS_METERS = 1500;
+async function setUpExplorer(container) {
+    const map = await createMap(container, { center: DEFAULT_CENTER, zoom: 14 });
+    const info = new google.maps.InfoWindow({ headerDisabled: true });
+    map.addListener('click', () => info.close());
 
-function setUpNearby(button) {
-    button.addEventListener('click', () => {
-        if (!navigator.geolocation) {
-            showStatus('nearby-status', '這個瀏覽器不支援定位。', true);
-            return;
-        }
-        button.disabled = true;
-        showStatus('nearby-status', '正在取得你的位置…', false);
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                await run(() => findNearby(position.coords), 'nearby-status');
-                button.disabled = false;
-            },
-            (error) => {
-                showStatus('nearby-status', geolocationMessage(error), true);
-                button.disabled = false;
-            },
-            { enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 },
-        );
-    });
+    if (!navigator.geolocation) {
+        showStatus('nearby-status', '這個瀏覽器不支援定位，下面列出 Co-Fin 的熱門咖啡廳。', true);
+        return;
+    }
+    // Asked as soon as the page opens, so nearby cafes appear without an extra click.
+    navigator.geolocation.getCurrentPosition(
+        (position) => run(() => showNearby(map, info, position.coords), 'nearby-status'),
+        (error) => showStatus('nearby-status', geolocationMessage(error), true),
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 },
+    );
 }
 
 function geolocationMessage(error) {
     switch (error.code) {
         case error.PERMISSION_DENIED:
-            return '你沒有允許使用位置。可以在瀏覽器網址列左側的設定裡開啟位置權限。';
+            return '你沒有允許使用位置，可以在瀏覽器網址列左側開啟位置權限。下面先列出 Co-Fin 的熱門咖啡廳。';
         case error.TIMEOUT:
-            return '取得位置逾時，請再試一次。';
+            return '取得位置逾時，請重新整理再試一次。';
         default:
             return '目前無法取得你的位置。';
     }
 }
 
-async function findNearby(coords) {
+async function showNearby(map, info, coords) {
     showStatus('nearby-status', '正在搜尋附近的咖啡廳…', false);
-    const { Place, SearchNearbyRankPreference } = await google.maps.importLibrary('places');
+    const [{ Place, SearchNearbyRankPreference }, { AdvancedMarkerElement }] = await Promise.all([
+        google.maps.importLibrary('places'),
+        google.maps.importLibrary('marker'),
+    ]);
     const here = { lat: coords.latitude, lng: coords.longitude };
+    map.setCenter(here);
+    new AdvancedMarkerElement({ map, position: here, content: element('div', 'me-dot'), title: '你的位置' });
 
     const { places } = await Place.searchNearby({
         fields: ['id', 'displayName', 'formattedAddress', 'location'],
         locationRestriction: { center: here, radius: NEARBY_RADIUS_METERS },
         includedPrimaryTypes: ['cafe'],
-        maxResultCount: 10,
+        maxResultCount: NEARBY_MAX_RESULTS,
         rankPreference: SearchNearbyRankPreference.DISTANCE,
         language: 'zh-TW',
         region: 'tw',
     });
-
     if (places.length === 0) {
         showStatus('nearby-status', '1.5 公里內沒有找到咖啡廳。', false);
         return;
@@ -154,9 +196,47 @@ async function findNearby(coords) {
 
     const list = document.getElementById('nearby-list');
     const matches = await lookUpInCoFin(list.dataset.lookupUrl, places.map((p) => p.id));
-    renderNearby(list, places, matches, here);
-    document.getElementById('nearby-panel').hidden = false;
-    showStatus('nearby-status', '找到 ' + places.length + ' 家咖啡廳。', false);
+    const bounds = new google.maps.LatLngBounds(here);
+    list.replaceChildren();
+
+    for (const place of places) {
+        const match = matches.get(place.id);
+        const entry = {
+            place,
+            match,
+            distance: distanceMeters(here, place.location),
+            pin: pinElement(match ? 'in-cofin' : null),
+        };
+        entry.marker = new AdvancedMarkerElement({
+            map, position: place.location, content: entry.pin, title: place.displayName, gmpClickable: true,
+        });
+        entry.item = nearbyListItem(entry, list.dataset);
+        list.append(entry.item);
+        bounds.extend(place.location);
+
+        const focus = () => {
+            highlight(entry, true);
+            info.setContent(infoCard(cardData(entry, list.dataset)));
+            info.open({ map, anchor: entry.marker, shouldFocus: false });
+        };
+        // Hovering either the pin or the list row shows the same card, like Google Maps.
+        entry.pin.addEventListener('mouseenter', focus);
+        entry.pin.addEventListener('mouseleave', () => highlight(entry, false));
+        entry.item.addEventListener('mouseenter', focus);
+        entry.item.addEventListener('mouseleave', () => highlight(entry, false));
+        entry.marker.addListener('click', () => {
+            focus();
+            entry.item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+    }
+    map.fitBounds(bounds, 48);
+    showStatus('nearby-status', '找到 ' + places.length + ' 家咖啡廳，距離由近到遠。', false);
+}
+
+function highlight(entry, on) {
+    entry.pin.classList.toggle('active', on);
+    entry.item.classList.toggle('active', on);
+    entry.marker.zIndex = on ? 1000 : null;
 }
 
 /** Asks our server which of these places are already in Co-Fin. Missing data just means "not in Co-Fin". */
@@ -176,48 +256,99 @@ async function lookUpInCoFin(url, placeIds) {
     }
 }
 
-// Built with DOM APIs and textContent (never innerHTML), so place names cannot inject HTML.
-function renderNearby(list, places, matches, here) {
-    list.replaceChildren();
-    for (const place of places) {
-        const match = matches.get(place.id);
-        const item = document.createElement('li');
+function cardData(entry, urls) {
+    const { place, match } = entry;
+    return {
+        name: place.displayName,
+        address: place.formattedAddress,
+        distance: entry.distance,
+        rating: match && match.averageRating != null ? match.averageRating.toFixed(1) : '',
+        reviewCount: match ? match.reviewCount : 0,
+        tags: match ? match.tags.map((t) => t.name) : [],
+        href: match ? urls.cafeUrl + match.cafeId : null,
+        onAdd: match ? null : () => addToCoFin(urls.createUrl, place),
+    };
+}
 
-        const info = element('div', 'grow');
-        if (match) {
-            const link = element('a', 'item-title', place.displayName);
-            link.href = list.dataset.cafeUrl + match.cafeId;
-            info.append(link);
-        } else {
-            info.append(element('span', 'item-title', place.displayName));
-        }
-        if (place.formattedAddress) {
-            info.append(element('div', 'muted', place.formattedAddress));
-        }
-        if (match && match.tags.length > 0) {
-            const chips = element('div', 'chips');
-            for (const tag of match.tags) {
-                const chip = element('span', 'chip');
-                chip.append(element('span', null, '#' + tag.name), element('span', 'count', String(tag.count)));
-                chips.append(chip);
-            }
-            info.append(chips);
-        }
+// Everything below builds DOM with textContent (never innerHTML), so place names cannot inject HTML.
 
-        const side = element('div', 'stats');
-        side.append(element('span', 'distance', formatDistance(distanceMeters(here, place.location))));
-        if (match) {
-            side.append(element('span', 'badge', '已在 Co-Fin'));
-        } else {
-            const add = element('button', 'secondary small', '加入 Co-Fin');
-            add.type = 'button';
-            add.addEventListener('click', () => addToCoFin(list.dataset.createUrl, place));
-            side.append(add);
-        }
+function nearbyListItem(entry, urls) {
+    const data = cardData(entry, urls);
+    const item = document.createElement('li');
 
-        item.append(info, side);
-        list.append(item);
+    const info = element('div', 'grow');
+    if (data.href) {
+        const link = element('a', 'item-title', data.name);
+        link.href = data.href;
+        info.append(link);
+    } else {
+        info.append(element('span', 'item-title', data.name));
     }
+    info.append(ratingLine(data));
+    if (data.address) {
+        info.append(element('div', 'muted', data.address));
+    }
+    if (data.tags.length > 0) {
+        info.append(tagChips(data.tags));
+    }
+
+    const side = element('div', 'stats');
+    side.append(element('span', 'distance', formatDistance(entry.distance)));
+    if (data.href) {
+        side.append(element('span', 'badge', '已在 Co-Fin'));
+    } else {
+        const add = element('button', 'secondary small', '加入 Co-Fin');
+        add.type = 'button';
+        add.addEventListener('click', data.onAdd);
+        side.append(add);
+    }
+    item.append(info, side);
+    return item;
+}
+
+function infoCard(data) {
+    const card = element('div', 'map-card');
+    card.append(element('div', 'map-card-title', data.name));
+    card.append(ratingLine(data));
+    if (data.distance !== undefined) {
+        card.append(element('div', 'map-card-meta', formatDistance(data.distance)));
+    }
+    if (data.address) {
+        card.append(element('div', 'map-card-meta', data.address));
+    }
+    if (data.tags.length > 0) {
+        card.append(tagChips(data.tags.slice(0, 4)));
+    }
+    if (data.href) {
+        const link = element('a', 'map-card-action', '查看評論 →');
+        link.href = data.href;
+        card.append(link);
+    } else if (data.onAdd) {
+        const add = element('button', 'small', '加入 Co-Fin');
+        add.type = 'button';
+        add.addEventListener('click', data.onAdd);
+        card.append(add);
+    }
+    return card;
+}
+
+function ratingLine(data) {
+    const line = element('div', 'rating-line');
+    if (data.reviewCount > 0) {
+        line.append(element('span', 'star', '★'), element('span', null, data.rating),
+            element('span', 'muted', '(' + data.reviewCount + ')'));
+    } else {
+        line.append(element('span', 'muted', data.href === null ? '還不在 Co-Fin' : '還沒有評論'));
+    }
+    return line;
+}
+
+function tagChips(tags) {
+    const chips = element('div', 'chips');
+    for (const tag of tags) {
+        chips.append(element('span', 'chip', '#' + tag));
+    }
+    return chips;
 }
 
 /** Submits the same form as the "新增咖啡廳" page; the server redirects to the cafe's page. */
@@ -247,7 +378,7 @@ function element(tag, className, text) {
     if (className) {
         el.className = className;
     }
-    if (text !== undefined) {
+    if (text !== undefined && text !== null) {
         el.textContent = text;
     }
     return el;

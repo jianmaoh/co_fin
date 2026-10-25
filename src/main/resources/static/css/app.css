@@ -1,22 +1,27 @@
-/* Industrial theme: concrete, steel, charcoal, and a rust accent. */
+/* Industrial theme: concrete, steel and charcoal, with soft rounded corners. No orange. */
 :root {
-    --concrete: #e4e2de;
-    --surface: #f5f4f2;
-    --surface-sunken: #ebe9e5;
-    --charcoal: #222427;
-    --charcoal-soft: #33363a;
+    --concrete: #e3e2df;
+    --surface: #f6f5f3;
+    --surface-sunken: #ecebe8;
+    --charcoal: #1f2226;
+    --charcoal-soft: #2c3035;
     --steel: #4a545e;
     --steel-light: #8a939c;
-    --text: #1d1e20;
-    --muted: #66635f;
-    --border: #c7c3bc;
-    --border-strong: #9a958e;
-    --rust: #b0502a;
-    --rust-hover: #8c3e1f;
-    --rust-tint: #f3e3db;
+    --text: #1c1d1f;
+    --muted: #64625e;
+    --border: #cdc9c2;
+    --border-strong: #9c978f;
+    --primary: #2b3036;
+    --primary-hover: #15181b;
+    --link: #3b5a73;
+    --link-hover: #263f52;
+    --focus: #5d7c95;
+    --star: #c9a227;
     --error: #a8231b;
     --success: #3b6a43;
-    --radius: 3px;
+    --radius-sm: 8px;
+    --radius: 12px;
+    --topbar-height: 58px;
     --font-display: "Oswald", "PingFang TC", "Noto Sans TC", sans-serif;
     --font-body: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", sans-serif;
     --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -40,16 +45,17 @@ body {
 }
 
 a {
-    color: var(--rust);
+    color: var(--link);
     text-underline-offset: 2px;
 }
 
 a:hover {
-    color: var(--rust-hover);
+    color: var(--link-hover);
 }
 
 h1,
-h2 {
+h2,
+h3 {
     font-family: var(--font-display);
     font-weight: 600;
     letter-spacing: 0.02em;
@@ -57,24 +63,24 @@ h2 {
 
 h1 {
     margin: 0 0 8px;
-    font-size: 1.9rem;
+    font-size: 1.8rem;
 }
 
 h2 {
     margin: 0 0 14px;
-    font-size: 1.05rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
     color: var(--steel);
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .eyebrow {
-    margin: 0 0 4px;
+    margin: 0 0 2px;
+    color: var(--steel-light);
     font-family: var(--font-display);
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: var(--rust);
 }
 
 .subtitle,
@@ -88,29 +94,40 @@ h2 {
     font-size: 0.85rem;
 }
 
+.small-text {
+    font-size: 0.85rem;
+}
+
 /* ---------- form controls ---------- */
 
-label {
+label,
+.label-like {
     display: block;
-    font-weight: 600;
     font-size: 0.92rem;
+    font-weight: 600;
 }
 
 input,
-select {
-    padding: 9px 10px;
+select,
+textarea {
+    padding: 9px 11px;
     border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
+    border-radius: var(--radius-sm);
     background: #fff;
     color: var(--text);
     font: inherit;
 }
 
+textarea {
+    resize: vertical;
+}
+
 input:focus,
-select:focus {
-    outline: 2px solid var(--rust);
+select:focus,
+textarea:focus {
+    outline: 2px solid var(--focus);
     outline-offset: 1px;
-    border-color: var(--rust);
+    border-color: var(--focus);
 }
 
 input.invalid {
@@ -121,23 +138,29 @@ button,
 .button {
     display: inline-block;
     padding: 9px 18px;
-    border: 1px solid var(--rust);
-    border-radius: var(--radius);
-    background: var(--rust);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-sm);
+    background: var(--primary);
     color: #fff;
     font-family: var(--font-display);
     font-size: 0.95rem;
     font-weight: 500;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
     text-decoration: none;
     cursor: pointer;
 }
 
 button:hover,
 .button:hover {
-    background: var(--rust-hover);
-    border-color: var(--rust-hover);
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
     color: #fff;
+}
+
+button:focus-visible,
+.button:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
 }
 
 button:disabled {
@@ -169,7 +192,7 @@ button:disabled {
 }
 
 .small {
-    padding: 4px 10px;
+    padding: 5px 12px;
     font-size: 0.82rem;
 }
 
@@ -177,7 +200,7 @@ button.link {
     padding: 0;
     border: none;
     background: none;
-    color: var(--rust);
+    color: var(--link);
     font-family: var(--font-body);
     letter-spacing: normal;
     text-decoration: underline;
@@ -186,14 +209,32 @@ button.link {
 
 button.link:hover {
     background: none;
-    color: var(--rust-hover);
+    color: var(--link-hover);
+}
+
+button.link.danger-link {
+    margin-top: 12px;
+    color: var(--error);
+}
+
+.actions,
+.row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
     margin-top: 20px;
+}
+
+.row-actions {
+    align-items: center;
+    margin: 12px 0 4px;
+}
+
+.row-actions form {
+    margin: 0;
 }
 
 .field-error {
@@ -206,7 +247,7 @@ button.link:hover {
     padding: 10px 14px;
     border: 1px solid var(--border);
     border-left: 4px solid var(--steel);
-    border-radius: var(--radius);
+    border-radius: var(--radius-sm);
     background: var(--surface);
 }
 
@@ -218,6 +259,22 @@ button.link:hover {
 .notice.success {
     border-left-color: var(--success);
     color: var(--success);
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border: 1px solid var(--success);
+    border-radius: 999px;
+    color: var(--success);
+    font-family: var(--font-body);
+    font-size: 0.76rem;
+    white-space: nowrap;
+}
+
+.badge.pending {
+    border-color: var(--steel-light);
+    color: var(--steel);
 }
 
 /* ---------- centered card pages (landing, login, register, errors) ---------- */
@@ -236,9 +293,9 @@ body.auth {
     padding: 32px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-top: 4px solid var(--rust);
+    border-top: 4px solid var(--steel);
     border-radius: var(--radius);
-    box-shadow: 0 1px 0 var(--border-strong);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .card label {
@@ -255,21 +312,18 @@ body.auth {
     margin-top: 22px;
 }
 
-.card .logout {
-    margin-top: 16px;
-}
-
-/* ---------- app pages ---------- */
+/* ---------- top bar ---------- */
 
 .topbar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 12px 28px;
-    padding: 12px 20px;
+    gap: 10px 28px;
+    min-height: var(--topbar-height);
+    padding: 10px 20px;
     background: var(--charcoal);
-    border-bottom: 3px solid var(--rust);
-    color: #d9d6d1;
+    border-bottom: 1px solid #000;
+    color: #d6d3ce;
 }
 
 .brand {
@@ -288,11 +342,12 @@ body.auth {
 .topbar nav {
     display: flex;
     flex: 1;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 6px 20px;
 }
 
 .topbar nav a {
-    color: #c9c5bf;
+    color: #bdb9b3;
     font-family: var(--font-display);
     letter-spacing: 0.08em;
     text-decoration: none;
@@ -316,12 +371,14 @@ body.auth {
 }
 
 .me button.link {
-    color: #c9c5bf;
+    color: #bdb9b3;
 }
 
 .me button.link:hover {
     color: #fff;
 }
+
+/* ---------- regular pages ---------- */
 
 .page {
     max-width: 880px;
@@ -333,17 +390,28 @@ body.auth {
     max-width: 540px;
 }
 
-.page-header {
+.page-header,
+.list-header,
+.title-row {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+}
+
+.page-header {
     margin-bottom: 16px;
 }
 
-.page-header h1 {
+.page-header h1,
+.list-header h1,
+.title-row h1 {
     margin: 0;
+}
+
+.title-row {
+    justify-content: flex-start;
 }
 
 .panel {
@@ -351,8 +419,8 @@ body.auth {
     padding: 20px 22px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-top: 3px solid var(--steel);
     border-radius: var(--radius);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .panel > form + form {
@@ -373,15 +441,13 @@ body.auth {
     min-width: 160px;
 }
 
-form.stack label {
+form.stack label,
+form.stack .label-like {
     margin-top: 16px;
 }
 
-form.stack label:first-of-type {
-    margin-top: 0;
-}
-
-form.stack input {
+form.stack input:not([type="radio"]):not([type="checkbox"]),
+form.stack textarea {
     width: 100%;
     margin-top: 6px;
 }
@@ -398,7 +464,7 @@ form.stack input {
     justify-content: space-between;
     gap: 14px;
     padding: 14px 0;
-    border-bottom: 1px dashed var(--border);
+    border-bottom: 1px solid var(--border);
 }
 
 .item-list li:first-child {
@@ -417,7 +483,7 @@ form.stack input {
 }
 
 a.item-title:hover {
-    color: var(--rust);
+    color: var(--link);
 }
 
 .grow {
@@ -439,51 +505,17 @@ a.item-title:hover {
     text-align: center;
 }
 
-/* ---------- home: hero, ranking, stats ---------- */
-
-.hero {
-    padding: 28px 26px;
-    background: var(--charcoal);
-    background-image: linear-gradient(135deg, var(--charcoal) 0%, var(--charcoal-soft) 100%);
-    border-left: 6px solid var(--rust);
-    border-radius: var(--radius);
-    color: #e2dfda;
-}
-
-.hero h1 {
-    color: #fff;
-}
-
-.hero p {
-    max-width: 560px;
-}
-
-.hero button {
-    margin-top: 8px;
-}
-
-.hero-status {
-    min-height: 1.5em;
-    margin: 12px 0 0;
-    color: var(--steel-light);
-    font-size: 0.9rem;
-}
-
-.hero .field-error {
-    color: #f0a58a;
-}
-
 .ranked .rank {
     flex: none;
-    width: 2rem;
+    width: 1.8rem;
     color: var(--border-strong);
     font-family: var(--font-display);
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     line-height: 1.2;
 }
 
 .ranked li:nth-child(-n + 3) .rank {
-    color: var(--rust);
+    color: var(--charcoal);
 }
 
 .stats {
@@ -504,16 +536,23 @@ a.item-title:hover {
     font-weight: 600;
 }
 
-.badge {
-    padding: 2px 8px;
-    border: 1px solid var(--success);
-    border-radius: var(--radius);
-    color: var(--success);
-    font-family: var(--font-body);
-    font-size: 0.78rem;
+.rating-line {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.88rem;
 }
 
-/* ---------- tag chips: stamped metal labels ---------- */
+.star,
+.stars {
+    color: var(--star);
+}
+
+.stars {
+    letter-spacing: 1px;
+}
+
+/* ---------- tag chips ---------- */
 
 .chips {
     display: flex;
@@ -531,9 +570,9 @@ a.item-title:hover {
     align-items: center;
     gap: 5px;
     margin: 0;
-    padding: 2px 9px;
+    padding: 2px 10px;
     border: 1px solid var(--steel-light);
-    border-radius: var(--radius);
+    border-radius: 6px;
     background: var(--surface-sunken);
     color: var(--steel);
     font-size: 0.82rem;
@@ -541,8 +580,8 @@ a.item-title:hover {
 }
 
 a.chip:hover {
-    border-color: var(--rust);
-    color: var(--rust);
+    border-color: var(--steel);
+    color: var(--text);
 }
 
 .chip.active,
@@ -578,19 +617,446 @@ a.chip.active:hover {
     opacity: 0.75;
 }
 
-/* ---------- Google Maps ---------- */
+/* ---------- split-screen pages: map on the left, content on the right ---------- */
+
+body.app-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.explorer,
+.detail {
+    display: grid;
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.explorer:not(.no-map) {
+    grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr);
+}
+
+.detail.with-map {
+    grid-template-columns: minmax(0, 1fr) minmax(380px, 1.2fr);
+}
+
+.explorer-map,
+.detail-map {
+    position: relative;
+    min-height: 0;
+    background: var(--charcoal);
+}
+
+.map-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.map-status {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    margin: 0;
+    color: #fff;
+    font-size: 0.85rem;
+}
+
+.explorer-list,
+.detail-body {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 22px 22px 48px;
+}
+
+.explorer.no-map .explorer-list,
+.detail:not(.with-map) .detail-body {
+    width: 100%;
+    max-width: 880px;
+    margin: 0 auto;
+}
+
+.explorer-list .status {
+    margin: 10px 0 14px;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.nearby li {
+    margin: 0 -10px;
+    padding: 12px 10px;
+    border-radius: var(--radius-sm);
+}
+
+.nearby li:first-child {
+    padding-top: 12px;
+}
+
+.nearby li.active {
+    background: var(--surface);
+    box-shadow: inset 3px 0 0 var(--charcoal);
+}
+
+.list-section {
+    margin-top: 28px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+.rating-summary {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin: 6px 0 4px;
+}
+
+.big-rating {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+}
+
+.links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 4px 0;
+}
+
+/* ---------- map pins and hover card ---------- */
+
+.map-pin {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #6d757d;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    transition: transform 0.12s ease;
+}
+
+.map-pin-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.map-pin.in-cofin {
+    background: #fff;
+    border-color: var(--charcoal);
+}
+
+.map-pin.in-cofin .map-pin-dot {
+    background: var(--charcoal);
+}
+
+.map-pin.active {
+    transform: scale(1.35);
+}
+
+.me-dot {
+    width: 16px;
+    height: 16px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    background: #4c8dd6;
+    box-shadow: 0 0 0 6px rgba(76, 141, 214, 0.3);
+}
+
+.map-card {
+    display: grid;
+    gap: 4px;
+    max-width: 240px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+}
+
+.map-card-title {
+    font-weight: 700;
+    font-size: 0.98rem;
+}
+
+.map-card-meta {
+    color: var(--muted);
+}
+
+.map-card .chips {
+    margin-top: 4px;
+}
+
+.map-card-action {
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+.map-card button {
+    justify-self: start;
+    margin-top: 4px;
+}
+
+/* ---------- people and reviews ---------- */
+
+.participants {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.participant {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: #fff;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-weight: 400;
+    letter-spacing: normal;
+    text-align: left;
+}
+
+.participant:hover {
+    border-color: var(--steel);
+    background: #fff;
+    color: var(--text);
+}
+
+.participant .grow {
+    display: grid;
+    gap: 2px;
+}
+
+.participant .chips {
+    margin-top: 2px;
+}
+
+.participant-name {
+    font-weight: 700;
+}
+
+.avatar {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--steel);
+    color: #fff;
+    font-family: var(--font-display);
+}
+
+.avatar.large {
+    width: 46px;
+    height: 46px;
+    font-size: 1.2rem;
+}
+
+.chevron {
+    color: var(--steel-light);
+    font-size: 1.4rem;
+}
+
+/* The drawer: a native <dialog> pinned to the right edge. */
+.drawer {
+    width: min(420px, 100vw);
+    max-width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    margin: 0 0 0 auto;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius) 0 0 var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.25);
+}
+
+.drawer[open] {
+    animation: drawer-in 0.18s ease-out;
+}
+
+.drawer::backdrop {
+    background: rgba(20, 22, 25, 0.45);
+}
+
+@keyframes drawer-in {
+    from {
+        transform: translateX(40px);
+        opacity: 0;
+    }
+}
+
+.drawer-body {
+    min-height: 100%;
+    padding: 26px 24px 40px;
+}
+
+.drawer-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    padding: 4px 10px;
+    border-color: var(--border);
+    background: transparent;
+    color: var(--muted);
+}
+
+.drawer-close:hover {
+    background: var(--surface-sunken);
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.drawer-title {
+    margin: 0;
+    color: var(--text);
+    font-size: 1.3rem;
+    letter-spacing: 0.02em;
+    text-transform: none;
+}
+
+.drawer-subtitle {
+    margin: 20px 0 6px;
+    color: var(--steel);
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 16px;
+    margin: 0 0 16px;
+    font-size: 0.9rem;
+}
+
+.facts dt {
+    color: var(--muted);
+}
+
+.facts dd {
+    margin: 0;
+}
+
+.review-content {
+    margin: 0;
+    white-space: pre-line;
+}
+
+.photos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.photos img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    background: var(--surface-sunken);
+}
+
+.photo-choice {
+    display: grid;
+    gap: 4px;
+    font-weight: 400;
+    font-size: 0.85rem;
+}
+
+/* Star rating input: inputs are 5..1 in the DOM so "this star and the ones before it" light up. */
+.star-input {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.star-input legend {
+    float: left;
+    width: 100%;
+    margin-bottom: 4px;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.star-input input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.star-input label {
+    color: var(--border-strong);
+    font-size: 1.7rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.star-input input:checked ~ label,
+.star-input label:hover,
+.star-input label:hover ~ label {
+    color: var(--star);
+}
+
+.star-input input:focus-visible + label {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* ---------- Google Maps place search ---------- */
 
 .place-search gmp-place-autocomplete {
     width: 100%;
     color-scheme: light;
 }
 
-.map {
-    height: 280px;
-    margin-top: 12px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
-    background: var(--surface-sunken);
+/* ---------- narrow screens: stack map above content ---------- */
+
+@media (max-width: 860px) {
+    body.app-shell {
+        display: block;
+        height: auto;
+    }
+
+    .explorer:not(.no-map),
+    .detail.with-map {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .explorer-map,
+    .detail-map {
+        height: 45vh;
+    }
+
+    .explorer-list,
+    .detail-body {
+        overflow: visible;
+    }
 }
 
 @media (max-width: 560px) {
@@ -601,5 +1067,9 @@ a.chip.active:hover {
     .stats {
         flex-direction: row;
         align-items: center;
+    }
+
+    .drawer {
+        border-radius: 0;
     }
 }

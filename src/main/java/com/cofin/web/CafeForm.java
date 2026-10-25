@@ -10,6 +10,7 @@ public class CafeForm {
     @Size(max = 100, message = "店名最多 100 個字")
     private String name;
 
+    @NotBlank(message = "請輸入地址")
     @Size(max = 200, message = "地址最多 200 個字")
     private String address;
 

@@ -25,11 +25,11 @@
                    th:classappend="${#fields.hasErrors('name')} ? 'invalid'">
             <p class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
 
-            <label for="address">地址 <span class="muted">（選填）</span></label>
+            <label for="address">地址</label>
             <input id="address" type="text" th:field="*{address}" maxlength="200"
                    th:classappend="${#fields.hasErrors('address')} ? 'invalid'">
             <p class="field-error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></p>
-            <p class="hint">店名和地址都相同的咖啡廳只會有一筆。</p>
+            <p class="hint">店名和地址都必填；兩者都相同的咖啡廳只會有一筆。新增後會等管理員核准，核准前你可以自己刪除。</p>
 
             <div class="actions">
                 <button type="submit">新增</button>

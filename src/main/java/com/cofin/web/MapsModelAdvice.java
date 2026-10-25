@@ -15,13 +15,26 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 public class MapsModelAdvice {
 
     private final String apiKey;
+    private final String mapId;
 
-    public MapsModelAdvice(@Value("${cofin.google-maps.api-key:}") String apiKey) {
-        this.apiKey = apiKey == null || apiKey.isBlank() ? null : apiKey.strip();
+    public MapsModelAdvice(@Value("${cofin.google-maps.api-key:}") String apiKey,
+                           @Value("${cofin.google-maps.map-id:}") String mapId) {
+        this.apiKey = blankToNull(apiKey);
+        this.mapId = blankToNull(mapId);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.strip();
     }
 
     @ModelAttribute("mapsApiKey")
     public String mapsApiKey() {
         return apiKey;
+    }
+
+    /** A Map ID with a custom style from Google Cloud; null means "use the built-in dark theme". */
+    @ModelAttribute("mapsMapId")
+    public String mapsMapId() {
+        return mapId;
     }
 }

@@ -15,10 +15,12 @@ public class UserService implements UserDetailsService {
 
     private final AppUserRepository users;
     private final PasswordEncoder passwordEncoder;
+    private final AdminUsernames adminUsernames;
 
-    public UserService(AppUserRepository users, PasswordEncoder passwordEncoder) {
+    public UserService(AppUserRepository users, PasswordEncoder passwordEncoder, AdminUsernames adminUsernames) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
+        this.adminUsernames = adminUsernames;
     }
 
     /** Usernames are case-insensitive, so "Alice" and "alice" are the same account. */
@@ -35,7 +37,11 @@ public class UserService implements UserDetailsService {
         try {
             // The unique constraint is the real guard: two concurrent requests
             // can both pass the exists check above.
-            return users.saveAndFlush(new AppUser(normalized, passwordEncoder.encode(rawPassword)));
+            AppUser user = new AppUser(normalized, passwordEncoder.encode(rawPassword));
+            if (adminUsernames.contains(normalized)) {
+                user.promoteToAdmin();
+            }
+            return users.saveAndFlush(user);
         } catch (DataIntegrityViolationException e) {
             throw new UsernameTakenException(normalized);
         }
@@ -48,7 +54,7 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(username));
         return User.withUsername(user.getUsername())
                 .password(user.getPasswordHash())
-                .roles("USER")
+                .roles(user.getRole())
                 .build();
     }
 }

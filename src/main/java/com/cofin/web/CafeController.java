@@ -5,9 +5,12 @@ import com.cofin.cafe.CreateResult;
 import com.cofin.collection.CollectionService;
 import com.cofin.common.CurrentUser;
 import com.cofin.common.InvalidInputException;
+import com.cofin.review.ReviewService;
 import com.cofin.user.AppUser;
 import jakarta.validation.Valid;
 import java.security.Principal;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -23,11 +26,14 @@ public class CafeController {
 
     private final CafeService cafeService;
     private final CollectionService collectionService;
+    private final ReviewService reviewService;
     private final CurrentUser currentUser;
 
-    public CafeController(CafeService cafeService, CollectionService collectionService, CurrentUser currentUser) {
+    public CafeController(CafeService cafeService, CollectionService collectionService,
+                          ReviewService reviewService, CurrentUser currentUser) {
         this.cafeService = cafeService;
         this.collectionService = collectionService;
+        this.reviewService = reviewService;
         this.currentUser = currentUser;
     }
 
@@ -71,7 +77,25 @@ public class CafeController {
         model.addAttribute("cafe", cafeService.detail(id, me.getId()));
         model.addAttribute("myCollections", collectionService.listFor(me.getId()));
         model.addAttribute("savedIn", collectionService.collectionsContaining(me.getId(), id));
+        model.addAttribute("rating", reviewService.ratingFor(id));
+        model.addAttribute("participants", reviewService.participants(id));
+        model.addAttribute("myReview", reviewService.myReview(id, me.getId()).orElse(null));
+        model.addAttribute("today", LocalDate.now(ZoneId.of("Asia/Taipei")));
         return "cafes/detail";
+    }
+
+    @PostMapping("/cafes/{id}/delete")
+    public String delete(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
+        cafeService.delete(id, currentUser.get(principal));
+        redirect.addFlashAttribute("message", "已刪除咖啡廳");
+        return "redirect:/cafes";
+    }
+
+    @PostMapping("/cafes/{id}/approve")
+    public String approve(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
+        cafeService.approve(id, currentUser.get(principal));
+        redirect.addFlashAttribute("message", "已核准這家咖啡廳");
+        return "redirect:/cafes/" + id;
     }
 
     @PostMapping("/cafes/{id}/tags")

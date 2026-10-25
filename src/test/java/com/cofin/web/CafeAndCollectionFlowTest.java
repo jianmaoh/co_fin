@@ -117,6 +117,16 @@ class CafeAndCollectionFlowTest {
     }
 
     @Test
+    void createCafeWithoutAddressShowsError() throws Exception {
+        mvc.perform(post("/cafes").with(ALICE).with(csrf()).param("name", "沒有地址"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("請輸入地址")));
+        assertThat(cafes.count()).isZero();
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> cafeService.create("沒有地址", " ", alice.getId()))
+                .hasMessageContaining("地址不能是空的");
+    }
+
+    @Test
     void unknownCafeIs404() throws Exception {
         mvc.perform(get("/cafes/999999").with(ALICE)).andExpect(status().isNotFound());
     }
@@ -131,7 +141,7 @@ class CafeAndCollectionFlowTest {
 
     @Test
     void tagsAreCountedPerUserAndRemovingOnlyAffectsYourOwn() throws Exception {
-        Long id = cafeService.create("貓下去", null, alice.getId()).id();
+        Long id = cafeService.create("貓下去", "台北市大安區", alice.getId()).id();
 
         mvc.perform(post("/cafes/" + id + "/tags").with(ALICE).with(csrf()).param("name", "#WiFi"))
                 .andExpect(redirectedUrl("/cafes/" + id));
@@ -159,7 +169,7 @@ class CafeAndCollectionFlowTest {
 
     @Test
     void invalidTagShowsFlashError() throws Exception {
-        Long id = cafeService.create("貓下去", null, alice.getId()).id();
+        Long id = cafeService.create("貓下去", "台北市大安區", alice.getId()).id();
 
         mvc.perform(post("/cafes/" + id + "/tags").with(ALICE).with(csrf()).param("name", "#"))
                 .andExpect(redirectedUrl("/cafes/" + id))
@@ -168,7 +178,7 @@ class CafeAndCollectionFlowTest {
 
     @Test
     void tagLimitPerUserPerCafe() {
-        Long id = cafeService.create("貓下去", null, alice.getId()).id();
+        Long id = cafeService.create("貓下去", "台北市大安區", alice.getId()).id();
         for (int i = 0; i < 10; i++) {
             cafeService.addTag(id, alice.getId(), "tag" + i);
         }
@@ -181,9 +191,9 @@ class CafeAndCollectionFlowTest {
 
     @Test
     void searchByNameAndTag() throws Exception {
-        Long quiet = cafeService.create("安靜咖啡", null, alice.getId()).id();
-        Long loud = cafeService.create("熱鬧咖啡", null, alice.getId()).id();
-        cafeService.create("100% Coffee", null, alice.getId());
+        Long quiet = cafeService.create("安靜咖啡", "台北市大安區", alice.getId()).id();
+        Long loud = cafeService.create("熱鬧咖啡", "台北市大安區", alice.getId()).id();
+        cafeService.create("100% Coffee", "台北市大安區", alice.getId());
         cafeService.addTag(quiet, alice.getId(), "安靜");
         cafeService.addTag(loud, alice.getId(), "有插座");
 
@@ -205,7 +215,7 @@ class CafeAndCollectionFlowTest {
 
     @Test
     void collectionLifecycle() throws Exception {
-        Long cafeId = cafeService.create("貓下去", null, alice.getId()).id();
+        Long cafeId = cafeService.create("貓下去", "台北市大安區", alice.getId()).id();
 
         mvc.perform(post("/collections").with(ALICE).with(csrf()).param("name", "讀書用"))
                 .andExpect(status().is3xxRedirection());
@@ -251,7 +261,7 @@ class CafeAndCollectionFlowTest {
 
     @Test
     void otherUsersCannotSeeOrChangeYourCollection() throws Exception {
-        Long cafeId = cafeService.create("貓下去", null, alice.getId()).id();
+        Long cafeId = cafeService.create("貓下去", "台北市大安區", alice.getId()).id();
         Long listId = collectionService.create(alice.getId(), "私藏");
 
         mvc.perform(get("/collections/" + listId).with(BOB)).andExpect(status().isNotFound());
@@ -270,7 +280,7 @@ class CafeAndCollectionFlowTest {
 
     @Test
     void deletingUserCascadesTheirDataButKeepsSharedCafes() {
-        Long cafeId = cafeService.create("貓下去", null, alice.getId()).id();
+        Long cafeId = cafeService.create("貓下去", "台北市大安區", alice.getId()).id();
         Long listId = collectionService.create(alice.getId(), "讀書用");
         collectionService.addItem(alice.getId(), listId, cafeId, null);
         cafeService.addTag(cafeId, alice.getId(), "安靜");

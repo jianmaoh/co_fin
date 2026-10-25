@@ -1,72 +1,217 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head(${cafe.name()})}"></head>
-<body>
+<body class="app-shell">
 <header th:replace="~{fragments/layout :: nav}"></header>
-<main class="page">
-    <div th:replace="~{fragments/layout :: flash}"></div>
+<main class="detail"
+      th:with="hasMap=${mapsApiKey != null and cafe.googlePlaceId() != null}"
+      th:classappend="${hasMap} ? 'with-map'">
 
-    <p><a th:href="@{/cafes}">← 所有咖啡廳</a></p>
-    <h1 th:text="${cafe.name()}">店名</h1>
-    <p class="muted" th:if="${cafe.address()}" th:text="${cafe.address()}">地址</p>
-    <p><a th:href="${cafe.mapsUrl()}" target="_blank" rel="noopener noreferrer">在 Google Maps 開啟 ↗</a></p>
+    <!-- Left: map (only for cafes picked from Google Maps) -->
+    <div class="detail-map" th:if="${hasMap}">
+        <div id="cafe-map" class="map-canvas"
+             th:data-map-id="${mapsMapId}"
+             th:data-place-id="${cafe.googlePlaceId()}"
+             th:data-name="${cafe.name()}"
+             th:data-address="${cafe.address()}"
+             th:data-rating="${rating.count() > 0} ? ${#numbers.formatDecimal(rating.average(), 1, 1)} : ''"
+             th:data-review-count="${rating.count()}"
+             th:data-tags="${#strings.listJoin(cafe.tags().![name()], ',')}"></div>
+        <p id="map-status" class="map-status"></p>
+    </div>
 
-    <th:block th:if="${mapsApiKey != null and cafe.googlePlaceId() != null}">
-        <div id="cafe-map" class="map" th:data-place-id="${cafe.googlePlaceId()}" th:data-name="${cafe.name()}"></div>
-        <p id="map-status" class="hint"></p>
-    </th:block>
+    <!-- Right: info, tags, reviews -->
+    <div class="detail-body">
+        <div th:replace="~{fragments/layout :: flash}"></div>
 
-    <section class="panel">
-        <h2>標籤</h2>
-        <p class="muted" th:if="${cafe.tags().isEmpty()}">還沒有人加標籤，當第一個吧。</p>
-        <div class="chips" th:unless="${cafe.tags().isEmpty()}">
-            <th:block th:each="t : ${cafe.tags()}">
-                <!-- Your own tag: click to remove your vote -->
-                <form th:if="${t.mine()}" class="chip mine" th:action="@{/cafes/{id}/tags/remove(id=${cafe.id()})}" method="post">
-                    <input type="hidden" name="name" th:value="${t.name()}">
-                    <span th:text="'#' + ${t.name()}">tag</span>
-                    <span class="count" th:text="${t.count()}">1</span>
-                    <button type="submit" th:title="'移除我的 #' + ${t.name()}" aria-label="移除">✕</button>
-                </form>
-                <!-- Someone else's tag: click to agree -->
-                <form th:unless="${t.mine()}" class="chip" th:action="@{/cafes/{id}/tags(id=${cafe.id()})}" method="post">
-                    <input type="hidden" name="name" th:value="${t.name()}">
-                    <span th:text="'#' + ${t.name()}">tag</span>
-                    <span class="count" th:text="${t.count()}">1</span>
-                    <button type="submit" th:title="'我也覺得是 #' + ${t.name()}" aria-label="我也加">＋</button>
-                </form>
-            </th:block>
+        <p><a th:href="@{/cafes}">← 所有咖啡廳</a></p>
+        <div class="title-row">
+            <h1 th:text="${cafe.name()}">店名</h1>
+            <span class="badge pending" th:unless="${cafe.approved()}">待審核</span>
         </div>
-        <p class="hint">深色的是你加的標籤，按 ✕ 移除；按 ＋ 表示你也同意。</p>
-
-        <form class="inline-form" th:action="@{/cafes/{id}/tags(id=${cafe.id()})}" method="post">
-            <input type="text" name="name" maxlength="20" placeholder="例如：安靜、有插座、不限時" aria-label="新標籤" required>
-            <button type="submit">加標籤</button>
-        </form>
-    </section>
-
-    <section class="panel">
-        <h2>收藏</h2>
-        <p th:unless="${savedIn.isEmpty()}">
-            已收藏在：
-            <th:block th:each="c, stat : ${savedIn}">
-                <a th:href="@{/collections/{id}(id=${c.id()})}" th:text="${c.name()}">清單</a><span th:unless="${stat.last}">、</span>
+        <p class="rating-summary">
+            <th:block th:if="${rating.count() > 0}">
+                <span class="big-rating" th:text="${#numbers.formatDecimal(rating.average(), 1, 1)}">4.5</span>
+                <span class="star">★</span>
+                <span class="muted" th:text="${rating.count()} + ' 則評論'">3 則評論</span>
             </th:block>
+            <span class="muted" th:if="${rating.count() == 0}">還沒有評論</span>
+        </p>
+        <p class="muted" th:text="${cafe.address()}">地址</p>
+        <p class="links">
+            <a th:href="${cafe.mapsUrl()}" target="_blank" rel="noopener noreferrer">在 Google Maps 開啟 ↗</a>
+            <span class="muted" th:if="${cafe.createdBy()}" th:text="'由 ' + ${cafe.createdBy()} + ' 新增'">由 alice 新增</span>
         </p>
 
-        <p class="muted" th:if="${myCollections.isEmpty()}">
-            你還沒有清單。<a th:href="@{/collections}">先建立一個</a>
-        </p>
-        <form class="inline-form" th:unless="${myCollections.isEmpty()}" th:action="@{/collections/items}" method="post">
-            <input type="hidden" name="cafeId" th:value="${cafe.id()}">
-            <select name="collectionId" aria-label="選擇清單">
-                <option th:each="c : ${myCollections}" th:value="${c.id()}" th:text="${c.name()}">清單</option>
-            </select>
-            <input type="text" name="note" maxlength="200" placeholder="備註（選填）" aria-label="備註">
-            <button type="submit">加入清單</button>
-        </form>
-    </section>
+        <div class="row-actions" th:if="${cafe.canApprove() or cafe.canDelete()}">
+            <form th:if="${cafe.canApprove()}" th:action="@{/cafes/{id}/approve(id=${cafe.id()})}" method="post">
+                <button type="submit" class="small">核准這家店</button>
+            </form>
+            <form th:if="${cafe.canDelete()}" th:action="@{/cafes/{id}/delete(id=${cafe.id()})}" method="post"
+                  onsubmit="return confirm('確定要刪除這家咖啡廳嗎？相關的標籤、收藏和評論都會一起刪除。');">
+                <button type="submit" class="small danger">刪除咖啡廳</button>
+            </form>
+        </div>
+
+        <!-- ---------- tags ---------- -->
+        <section class="panel">
+            <h2>標籤</h2>
+            <p class="muted" th:if="${cafe.tags().isEmpty()}">還沒有人加標籤，當第一個吧。</p>
+            <div class="chips" th:unless="${cafe.tags().isEmpty()}">
+                <th:block th:each="t : ${cafe.tags()}">
+                    <!-- Your own tag: click to remove your vote -->
+                    <form th:if="${t.mine()}" class="chip mine" th:action="@{/cafes/{id}/tags/remove(id=${cafe.id()})}" method="post">
+                        <input type="hidden" name="name" th:value="${t.name()}">
+                        <span th:text="'#' + ${t.name()}">tag</span>
+                        <span class="count" th:text="${t.count()}">1</span>
+                        <button type="submit" th:title="'移除我的 #' + ${t.name()}" aria-label="移除">✕</button>
+                    </form>
+                    <!-- Someone else's tag: click to agree -->
+                    <form th:unless="${t.mine()}" class="chip" th:action="@{/cafes/{id}/tags(id=${cafe.id()})}" method="post">
+                        <input type="hidden" name="name" th:value="${t.name()}">
+                        <span th:text="'#' + ${t.name()}">tag</span>
+                        <span class="count" th:text="${t.count()}">1</span>
+                        <button type="submit" th:title="'我也覺得是 #' + ${t.name()}" aria-label="我也加">＋</button>
+                    </form>
+                </th:block>
+            </div>
+            <p class="hint">深色的是你加的標籤，按 ✕ 移除；按 ＋ 表示你也同意。</p>
+            <form class="inline-form" th:action="@{/cafes/{id}/tags(id=${cafe.id()})}" method="post">
+                <input type="text" name="name" maxlength="20" placeholder="例如：安靜、有插座、不限時" aria-label="新標籤" required>
+                <button type="submit">加標籤</button>
+            </form>
+        </section>
+
+        <!-- ---------- people and their reviews ---------- -->
+        <section class="panel">
+            <h2>大家的評論</h2>
+            <p class="muted" th:if="${participants.isEmpty()}">還沒有人評論或加標籤。</p>
+            <ul class="participants" th:unless="${participants.isEmpty()}">
+                <li th:each="p, stat : ${participants}">
+                    <button type="button" class="participant" th:data-participant="'participant-' + ${stat.index}">
+                        <span class="avatar" th:text="${#strings.toUpperCase(#strings.substring(p.username(), 0, 1))}">A</span>
+                        <span class="grow">
+                            <span class="participant-name" th:text="${p.username()}">alice</span>
+                            <th:block th:if="${p.review()}"><span th:replace="~{fragments/layout :: stars(${p.review().rating()})}"></span></th:block>
+                            <span class="muted small-text" th:unless="${p.review()}">只加了標籤</span>
+                            <span class="chips" th:unless="${p.tags().isEmpty()}">
+                                <span class="chip" th:each="t : ${p.tags()}" th:text="'#' + ${t}">tag</span>
+                            </span>
+                        </span>
+                        <span class="chevron" aria-hidden="true">›</span>
+                    </button>
+
+                    <!-- Drawer content, shown by reviews.js without leaving the page -->
+                    <template th:id="'participant-' + ${stat.index}">
+                        <div class="drawer-header">
+                            <span class="avatar large" th:text="${#strings.toUpperCase(#strings.substring(p.username(), 0, 1))}">A</span>
+                            <div>
+                                <h2 class="drawer-title" th:text="${p.username()}">alice</h2>
+                                <th:block th:if="${p.review()}"><span th:replace="~{fragments/layout :: stars(${p.review().rating()})}"></span></th:block>
+                            </div>
+                        </div>
+                        <th:block th:if="${p.review()}" th:with="r=${p.review()}">
+                            <dl class="facts">
+                                <dt>評分</dt>
+                                <dd th:text="${r.rating()} + ' / 5'">4 / 5</dd>
+                                <dt>造訪日期</dt>
+                                <dd th:text="${r.visitedOn()} ?: '未填寫'">2026-10-01</dd>
+                                <dt>更新於</dt>
+                                <dd th:text="${r.updatedOn()}">2026-10-02</dd>
+                            </dl>
+                            <p class="review-content" th:if="${r.content()}" th:text="${r.content()}">評論內容</p>
+                            <p class="muted" th:unless="${r.content()}">沒有留下文字。</p>
+                            <div class="photos" th:unless="${r.photoIds().isEmpty()}">
+                                <a th:each="photoId : ${r.photoIds()}" th:href="@{/photos/{id}(id=${photoId})}" target="_blank">
+                                    <img th:src="@{/photos/{id}(id=${photoId})}" loading="lazy"
+                                         th:alt="${p.username()} + ' 的照片'">
+                                </a>
+                            </div>
+                        </th:block>
+                        <p class="muted" th:unless="${p.review()}">這位使用者只加了標籤，還沒有寫評論。</p>
+                        <h3 class="drawer-subtitle" th:unless="${p.tags().isEmpty()}">加的標籤</h3>
+                        <div class="chips" th:unless="${p.tags().isEmpty()}">
+                            <span class="chip" th:each="t : ${p.tags()}" th:text="'#' + ${t}">tag</span>
+                        </div>
+                    </template>
+                </li>
+            </ul>
+        </section>
+
+        <!-- ---------- my review ---------- -->
+        <section class="panel" id="my-review">
+            <h2 th:text="${myReview} ? '編輯我的評論' : '寫評論'">寫評論</h2>
+            <form class="stack" th:action="@{/cafes/{id}/review(id=${cafe.id()})}" method="post" enctype="multipart/form-data">
+                <fieldset class="star-input">
+                    <legend>評分</legend>
+                    <th:block th:each="n : ${#numbers.sequence(5, 1)}">
+                        <input type="radio" name="rating" th:id="'rating-' + ${n}" th:value="${n}" required
+                               th:checked="${myReview != null and myReview.rating() == n}">
+                        <label th:for="'rating-' + ${n}" th:title="${n} + ' 顆星'">★</label>
+                    </th:block>
+                </fieldset>
+
+                <label for="visitedOn">造訪日期 <span class="muted">（選填）</span></label>
+                <input id="visitedOn" type="date" name="visitedOn" th:max="${today}"
+                       th:value="${myReview != null} ? ${myReview.visitedOn()} : ''">
+
+                <label for="content">評論 <span class="muted">（選填，最多 1000 字）</span></label>
+                <textarea id="content" name="content" rows="4" maxlength="1000"
+                          th:text="${myReview != null} ? ${myReview.content()} : ''"></textarea>
+
+                <th:block th:if="${myReview != null and !myReview.photoIds().isEmpty()}">
+                    <p class="label-like">目前的照片 <span class="muted">（勾選要刪除的）</span></p>
+                    <div class="photos editable">
+                        <label th:each="photoId : ${myReview.photoIds()}" class="photo-choice">
+                            <img th:src="@{/photos/{id}(id=${photoId})}" alt="我的照片">
+                            <span><input type="checkbox" name="deletePhotoIds" th:value="${photoId}"> 刪除</span>
+                        </label>
+                    </div>
+                </th:block>
+
+                <label for="photos">新增照片 <span class="muted">（JPEG、PNG、WebP，每張 5 MB 內，每則最多 3 張）</span></label>
+                <input id="photos" type="file" name="photos" multiple accept="image/jpeg,image/png,image/webp">
+
+                <div class="actions">
+                    <button type="submit">儲存評論</button>
+                </div>
+            </form>
+            <form th:if="${myReview}" th:action="@{/cafes/{id}/review/delete(id=${cafe.id()})}" method="post"
+                  onsubmit="return confirm('確定要刪除你的評論和照片嗎？');">
+                <button type="submit" class="link danger-link">刪除我的評論</button>
+            </form>
+        </section>
+
+        <!-- ---------- collections ---------- -->
+        <section class="panel">
+            <h2>收藏</h2>
+            <p th:unless="${savedIn.isEmpty()}">
+                已收藏在：
+                <th:block th:each="c, stat : ${savedIn}">
+                    <a th:href="@{/collections/{id}(id=${c.id()})}" th:text="${c.name()}">清單</a><span th:unless="${stat.last}">、</span>
+                </th:block>
+            </p>
+            <p class="muted" th:if="${myCollections.isEmpty()}">
+                你還沒有清單。<a th:href="@{/collections}">先建立一個</a>
+            </p>
+            <form class="inline-form" th:unless="${myCollections.isEmpty()}" th:action="@{/collections/items}" method="post">
+                <input type="hidden" name="cafeId" th:value="${cafe.id()}">
+                <select name="collectionId" aria-label="選擇清單">
+                    <option th:each="c : ${myCollections}" th:value="${c.id()}" th:text="${c.name()}">清單</option>
+                </select>
+                <input type="text" name="note" maxlength="200" placeholder="備註（選填）" aria-label="備註">
+                <button type="submit">加入清單</button>
+            </form>
+        </section>
+    </div>
 </main>
+
+<dialog id="participant-drawer" class="drawer" aria-label="使用者評論">
+    <button type="button" class="drawer-close" aria-label="關閉">✕</button>
+    <div class="drawer-body"></div>
+</dialog>
+
+<script th:src="@{/js/reviews.js}"></script>
 <th:block th:if="${cafe.googlePlaceId() != null}">
     <th:block th:replace="~{fragments/layout :: mapsScripts}"></th:block>
 </th:block>

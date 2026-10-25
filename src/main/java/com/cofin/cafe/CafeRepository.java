@@ -15,7 +15,13 @@ public interface CafeRepository extends JpaRepository<Cafe, Long> {
 
     Optional<Cafe> findFirstByNameIgnoreCaseAndAddressIgnoreCase(String name, String address);
 
-    Optional<Cafe> findFirstByNameIgnoreCaseAndAddressIsNull(String name);
+    @Query("""
+            select new com.cofin.cafe.PendingCafe(c.id, c.name, c.address, u.username, c.createdAt)
+            from Cafe c left join c.createdBy u
+            where c.approvedAt is null
+            order by c.createdAt, c.id
+            """)
+    List<PendingCafe> findPending();
 
     /** {@code pattern} must already be lower-cased and LIKE-escaped (see Names.escapeLike). */
     @Query("""

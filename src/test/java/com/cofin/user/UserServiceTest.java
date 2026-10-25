@@ -31,7 +31,7 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new UserService(users, passwordEncoder);
+        service = new UserService(users, passwordEncoder, new AdminUsernames(" Boss, "));
     }
 
     @Test
@@ -44,6 +44,17 @@ class UserServiceTest {
 
         assertThat(saved.getUsername()).isEqualTo("alice");
         assertThat(saved.getPasswordHash()).isEqualTo("{bcrypt}hash");
+    }
+
+    @Test
+    void registerPromotesConfiguredAdminUsernames() {
+        when(users.existsByUsername("boss")).thenReturn(false);
+        when(passwordEncoder.encode(any())).thenReturn("{bcrypt}hash");
+        when(users.saveAndFlush(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertThat(service.register("BOSS", "secret123").isAdmin()).isTrue();
+        when(users.existsByUsername("alice")).thenReturn(false);
+        assertThat(service.register("alice", "secret123").isAdmin()).isFalse();
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.cofin.cafe;
 import com.cofin.common.InvalidInputException;
 import com.cofin.common.Names;
 import com.cofin.common.NotFoundException;
+import com.cofin.user.AppUser;
 import com.cofin.user.AppUserRepository;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -15,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,23 +86,18 @@ public class CafeService {
     }
 
     /**
-     * Reuses an existing cafe instead of duplicating it: the same Google place id,
-     * or (for cafes typed in by hand) the same name and address, case-insensitive.
+     * Name and address are both required. Reuses an existing cafe instead of duplicating it:
+     * the same Google place id, or the same name and address (case-insensitive).
      */
     @Transactional
     public CreateResult create(String rawName, String rawAddress, String rawPlaceId, Long userId) {
         String name = Names.required(rawName, 100, "店名");
-        String address = Names.optional(rawAddress, 200, "地址");
+        String address = Names.required(rawAddress, 200, "地址");
         String placeId = Names.optional(rawPlaceId, 255, "Google 地點");
 
-        Optional<Cafe> existing;
-        if (placeId != null) {
-            existing = cafes.findByGooglePlaceId(placeId);
-        } else if (address == null) {
-            existing = cafes.findFirstByNameIgnoreCaseAndAddressIsNull(name);
-        } else {
-            existing = cafes.findFirstByNameIgnoreCaseAndAddressIgnoreCase(name, address);
-        }
+        Optional<Cafe> existing = placeId != null
+                ? cafes.findByGooglePlaceId(placeId)
+                : cafes.findFirstByNameIgnoreCaseAndAddressIgnoreCase(name, address);
         if (existing.isPresent()) {
             return new CreateResult(existing.get().getId(), false);
         }
@@ -110,12 +107,42 @@ public class CafeService {
 
     public CafeDetail detail(Long cafeId, Long userId) {
         Cafe cafe = findCafe(cafeId);
+        AppUser viewer = users.findById(userId).orElseThrow(() -> new NotFoundException("找不到使用者"));
         Set<String> mine = Set.copyOf(cafeTags.findTagNames(cafeId, userId));
         List<TagView> tagViews = cafeTags.countByCafeIds(List.of(cafeId)).stream()
                 .map(tc -> new TagView(tc.name(), tc.count(), mine.contains(tc.name())))
                 .toList();
+        String createdBy = cafe.getCreatedBy() == null ? null : cafe.getCreatedBy().getUsername();
         return new CafeDetail(cafe.getId(), cafe.getName(), cafe.getAddress(), cafe.getGooglePlaceId(),
-                mapsUrl(cafe), tagViews);
+                mapsUrl(cafe), tagViews, cafe.isApproved(), createdBy,
+                cafe.canBeDeletedBy(viewer), viewer.isAdmin() && !cafe.isApproved());
+    }
+
+    /** The database cascades the delete to tags, collection items and reviews. */
+    @Transactional
+    public void delete(Long cafeId, AppUser actor) {
+        Cafe cafe = findCafe(cafeId);
+        if (!cafe.canBeDeletedBy(actor)) {
+            throw new AccessDeniedException(cafe.isApproved()
+                    ? "已核准的咖啡廳只能由管理員刪除"
+                    : "只有新增這家店的人或管理員可以刪除");
+        }
+        cafes.delete(cafe);
+    }
+
+    @Transactional
+    public void approve(Long cafeId, AppUser actor) {
+        if (!actor.isAdmin()) {
+            throw new AccessDeniedException("只有管理員可以核准咖啡廳");
+        }
+        Cafe cafe = findCafe(cafeId);
+        if (!cafe.isApproved()) {
+            cafe.approve(actor);
+        }
+    }
+
+    public List<PendingCafe> pending() {
+        return cafes.findPending();
     }
 
     /** Idempotent: adding a tag you already added is a no-op. */

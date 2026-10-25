@@ -15,8 +15,10 @@
 <header th:fragment="nav" class="topbar">
     <a class="brand" th:href="@{/}">☕ Co-Fin</a>
     <nav>
+        <a th:href="@{/}">附近</a>
         <a th:href="@{/cafes}">咖啡廳</a>
         <a th:href="@{/collections}">我的清單</a>
+        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/cafes}">審核</a>
     </nav>
     <div class="me">
         <span sec:authentication="name">user</span>
@@ -34,6 +36,11 @@
                 th:src="@{https://maps.googleapis.com/maps/api/js(key=${mapsApiKey},loading='async',callback='coFinMapsReady',language='zh-TW',region='TW')}"></script>
     </th:block>
 </th:block>
+
+<!-- Rating as stars, e.g. ★★★★☆ -->
+<span th:fragment="stars(value)" class="stars"
+      th:text="${#strings.repeat('★', value)} + ${#strings.repeat('☆', 5 - value)}"
+      th:attr="aria-label=${value} + ' 顆星'">★★★★★</span>
 
 <div th:fragment="flash">
     <p th:if="${message}" class="notice success" th:text="${message}"></p>

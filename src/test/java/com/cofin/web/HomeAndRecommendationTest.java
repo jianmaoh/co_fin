@@ -68,9 +68,9 @@ class HomeAndRecommendationTest {
 
     @Test
     void popularRanksBySavesThenTagVotesAndSkipsInactiveCafes() {
-        Long saved = cafeService.create("兩人收藏", null, alice.getId()).id();
-        Long tagged = cafeService.create("很多標籤", null, alice.getId()).id();
-        cafeService.create("沒人理", null, alice.getId());
+        Long saved = cafeService.create("兩人收藏", "台北市大安區", alice.getId()).id();
+        Long tagged = cafeService.create("很多標籤", "台北市大安區", alice.getId()).id();
+        cafeService.create("沒人理", "台北市大安區", alice.getId());
 
         Long aliceList = collectionService.create(alice.getId(), "清單");
         Long bobList = collectionService.create(bob.getId(), "清單");
@@ -98,17 +98,17 @@ class HomeAndRecommendationTest {
         mvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("/register")))
-                .andExpect(content().string(not(containsString("熱門咖啡廳"))));
+                .andExpect(content().string(not(containsString("Co-Fin 熱門"))));
     }
 
     @Test
     void homeShowsPopularCafesAndExplainsMissingMapsKey() throws Exception {
-        Long id = cafeService.create("貓下去", null, alice.getId()).id();
+        Long id = cafeService.create("貓下去", "台北市大安區", alice.getId()).id();
         cafeService.addTag(id, alice.getId(), "安靜");
 
         mvc.perform(get("/").with(user("alice")))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Co-Fin 熱門咖啡廳")))
+                .andExpect(content().string(containsString("Co-Fin 熱門")))
                 .andExpect(content().string(containsString("貓下去")))
                 .andExpect(content().string(containsString("需要設定 Google Maps 金鑰")))
                 .andExpect(content().string(not(containsString("nearby-button"))));
@@ -124,7 +124,7 @@ class HomeAndRecommendationTest {
 
     @Test
     void lookupReturnsOnlyPlacesAlreadyInCoFin() throws Exception {
-        Long id = cafeService.create("貓下去", null, PLACE_A, alice.getId()).id();
+        Long id = cafeService.create("貓下去", "台北市大安區", PLACE_A, alice.getId()).id();
         cafeService.addTag(id, alice.getId(), "安靜");
 
         mvc.perform(get("/api/cafes/by-place").param("ids", PLACE_A, PLACE_B).with(user("alice")))

@@ -2,6 +2,8 @@ package com.cofin.recommend;
 
 import com.cofin.cafe.CafeService;
 import com.cofin.cafe.TagCount;
+import com.cofin.review.RatingSummary;
+import com.cofin.review.ReviewService;
 import java.util.List;
 import java.util.Map;
 import org.springframework.data.domain.PageRequest;
@@ -20,18 +22,26 @@ public class RecommendationService {
 
     private final RecommendationRepository recommendations;
     private final CafeService cafeService;
+    private final ReviewService reviewService;
 
-    public RecommendationService(RecommendationRepository recommendations, CafeService cafeService) {
+    public RecommendationService(RecommendationRepository recommendations, CafeService cafeService,
+                                 ReviewService reviewService) {
         this.recommendations = recommendations;
         this.cafeService = cafeService;
+        this.reviewService = reviewService;
     }
 
     public List<PopularCafeView> popular() {
         List<PopularCafe> popular = recommendations.findPopular(PageRequest.of(0, POPULAR_LIMIT));
-        Map<Long, List<TagCount>> tags = cafeService.topTagsFor(popular.stream().map(PopularCafe::id).toList());
+        List<Long> ids = popular.stream().map(PopularCafe::id).toList();
+        Map<Long, List<TagCount>> tags = cafeService.topTagsFor(ids);
+        Map<Long, RatingSummary> ratings = reviewService.ratingsFor(ids);
         return popular.stream()
-                .map(p -> new PopularCafeView(p.id(), p.name(), p.address(), p.saves(), p.votes(),
-                        tags.getOrDefault(p.id(), List.of())))
+                .map(p -> {
+                    RatingSummary r = ratings.getOrDefault(p.id(), RatingSummary.none(p.id()));
+                    return new PopularCafeView(p.id(), p.name(), p.address(), p.saves(), p.votes(),
+                            tags.getOrDefault(p.id(), List.of()), r.average(), r.count());
+                })
                 .toList();
     }
 }

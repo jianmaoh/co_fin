@@ -75,7 +75,8 @@ class MapsPagesTest {
     void homeOffersNearbySearchWithCsrfTokenForAddingCafes() throws Exception {
         mvc.perform(get("/").with(user("alice")))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("id=\"nearby-button\"")))
+                .andExpect(content().string(containsString("id=\"explore-map\"")))
+                .andExpect(content().string(containsString("正在取得你的位置")))
                 .andExpect(content().string(containsString("id=\"csrf-token\" name=\"_csrf\"")))
                 .andExpect(content().string(containsString("data-lookup-url=\"/api/cafes/by-place\"")))
                 .andExpect(content().string(containsString("maps.googleapis.com/maps/api/js")));
@@ -93,7 +94,7 @@ class MapsPagesTest {
 
     @Test
     void handTypedCafeHasNoMapAndLoadsNoScript() throws Exception {
-        Long id = cafeService.create("手動咖啡", null, alice.getId()).id();
+        Long id = cafeService.create("手動咖啡", "台北市大安區", alice.getId()).id();
 
         mvc.perform(get("/cafes/" + id).with(user("alice")))
                 .andExpect(content().string(not(containsString("cafe-map"))))
@@ -122,6 +123,7 @@ class MapsPagesTest {
     void malformedPlaceIdIsRejected() throws Exception {
         mvc.perform(post("/cafes").with(user("alice")).with(csrf())
                         .param("name", "貓下去")
+                        .param("address", "台北市")
                         .param("placeId", "not a place id!"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Google 地點資料有誤")));

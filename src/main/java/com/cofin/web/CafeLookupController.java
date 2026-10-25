@@ -2,8 +2,11 @@ package com.cofin.web;
 
 import com.cofin.cafe.CafeService;
 import com.cofin.cafe.PlaceMatch;
+import com.cofin.review.RatingSummary;
+import com.cofin.review.ReviewService;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
@@ -20,13 +23,15 @@ public class CafeLookupController {
     private static final Pattern PLACE_ID = Pattern.compile("^[A-Za-z0-9_-]{10,255}$");
 
     private final CafeService cafeService;
+    private final ReviewService reviewService;
 
-    public CafeLookupController(CafeService cafeService) {
+    public CafeLookupController(CafeService cafeService, ReviewService reviewService) {
         this.cafeService = cafeService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping("/api/cafes/by-place")
-    public List<PlaceMatch> byPlace(@RequestParam(name = "ids", defaultValue = "") List<String> ids) {
+    public List<NearbyMatch> byPlace(@RequestParam(name = "ids", defaultValue = "") List<String> ids) {
         Set<String> unique = new LinkedHashSet<>(ids);
         if (unique.size() > MAX_IDS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At most " + MAX_IDS + " ids");
@@ -34,6 +39,13 @@ public class CafeLookupController {
         if (!unique.stream().allMatch(id -> PLACE_ID.matcher(id).matches())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Malformed place id");
         }
-        return cafeService.findByPlaceIds(unique);
+        List<PlaceMatch> matches = cafeService.findByPlaceIds(unique);
+        Map<Long, RatingSummary> ratings = reviewService.ratingsFor(matches.stream().map(PlaceMatch::cafeId).toList());
+        return matches.stream()
+                .map(m -> {
+                    RatingSummary r = ratings.getOrDefault(m.cafeId(), RatingSummary.none(m.cafeId()));
+                    return new NearbyMatch(m.placeId(), m.cafeId(), m.tags(), r.average(), r.count());
+                })
+                .toList();
     }
 }
