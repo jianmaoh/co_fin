@@ -24,7 +24,7 @@
     <div class="detail-body">
         <div th:replace="~{fragments/layout :: flash}"></div>
 
-        <p><a th:href="@{/cafes}">← 所有咖啡廳</a></p>
+        <p><a href="javascript:history.back()">← 返回</a></p>
         <div class="title-row">
             <h1 th:text="${cafe.name()}">店名</h1>
             <span class="badge pending" th:unless="${cafe.approved()}">待審核</span>

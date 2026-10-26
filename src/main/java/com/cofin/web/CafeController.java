@@ -2,15 +2,19 @@ package com.cofin.web;
 
 import com.cofin.cafe.CafeService;
 import com.cofin.cafe.CreateResult;
+import com.cofin.cafe.SearchResult;
 import com.cofin.collection.CollectionService;
 import com.cofin.common.CurrentUser;
 import com.cofin.common.InvalidInputException;
 import com.cofin.review.ReviewService;
 import com.cofin.user.AppUser;
 import jakarta.validation.Valid;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -37,16 +41,20 @@ public class CafeController {
         this.currentUser = currentUser;
     }
 
-    @GetMapping("/cafes")
-    public String list(@RequestParam(defaultValue = "") String q,
-                       @RequestParam(required = false) String tag,
-                       Model model) {
-        String activeTag = tag == null || tag.isBlank() ? null : tag;
+    @GetMapping("/search")
+    public String search(@RequestParam(defaultValue = "") String q, Model model) {
+        List<SearchResult> results = cafeService.search(q);
         model.addAttribute("q", q);
-        model.addAttribute("tag", activeTag);
-        model.addAttribute("cafes", cafeService.search(q, activeTag));
+        model.addAttribute("results", results);
+        model.addAttribute("ratings", reviewService.ratingsFor(results.stream().map(SearchResult::id).toList()));
         model.addAttribute("popularTags", cafeService.popularTags());
-        return "cafes/list";
+        return "search";
+    }
+
+    /** The old list page; kept so existing links and bookmarks still work. */
+    @GetMapping("/cafes")
+    public String cafes(@RequestParam(defaultValue = "") String q) {
+        return q.isBlank() ? "redirect:/search" : "redirect:/search?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
     }
 
     @GetMapping("/cafes/new")
@@ -88,7 +96,7 @@ public class CafeController {
     public String delete(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
         cafeService.delete(id, currentUser.get(principal));
         redirect.addFlashAttribute("message", "已刪除咖啡廳");
-        return "redirect:/cafes";
+        return "redirect:/search";
     }
 
     @PostMapping("/cafes/{id}/approve")

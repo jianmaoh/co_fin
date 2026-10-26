@@ -133,7 +133,7 @@ class CafeAndCollectionFlowTest {
 
     @Test
     void cafePagesRequireLogin() throws Exception {
-        mvc.perform(get("/cafes")).andExpect(redirectedUrl("/login"));
+        mvc.perform(get("/search")).andExpect(redirectedUrl("/login"));
         mvc.perform(get("/collections")).andExpect(redirectedUrl("/login"));
     }
 
@@ -190,25 +190,59 @@ class CafeAndCollectionFlowTest {
     }
 
     @Test
-    void searchByNameAndTag() throws Exception {
-        Long quiet = cafeService.create("安靜咖啡", "台北市大安區", alice.getId()).id();
-        Long loud = cafeService.create("熱鬧咖啡", "台北市大安區", alice.getId()).id();
-        cafeService.create("100% Coffee", "台北市大安區", alice.getId());
+    void searchMatchesPartsOfTagsAndNames() throws Exception {
+        Long basque = cafeService.create("甜點咖啡", "台北市大安區", alice.getId()).id();
+        Long quiet = cafeService.create("安靜咖啡", "台北市信義區", alice.getId()).id();
+        Long both = cafeService.create("角落", "台北市中山區", alice.getId()).id();
+        cafeService.create("100% Coffee", "台北市松山區", alice.getId());
+        cafeService.addTag(basque, alice.getId(), "巴斯克蛋糕");
         cafeService.addTag(quiet, alice.getId(), "安靜");
-        cafeService.addTag(loud, alice.getId(), "有插座");
+        cafeService.addTag(both, alice.getId(), "巴斯克");
+        cafeService.addTag(both, bob.getId(), "巴斯克");
+        cafeService.addTag(both, alice.getId(), "有插座");
 
-        assertThat(cafeService.search("咖啡", null)).extracting("name").containsExactlyInAnyOrder("安靜咖啡", "熱鬧咖啡");
-        assertThat(cafeService.search("", "#安靜")).extracting("name").containsExactly("安靜咖啡");
-        assertThat(cafeService.search("熱鬧", "安靜")).isEmpty();
-        // "%" is matched literally, not as a wildcard.
-        assertThat(cafeService.search("100%", null)).extracting("name").containsExactly("100% Coffee");
-        assertThat(cafeService.search("0% C", null)).extracting("name").containsExactly("100% Coffee");
-        assertThat(cafeService.search("%", null)).extracting("name").containsExactly("100% Coffee");
+        // Part of a tag: "巴斯克" finds #巴斯克 and #巴斯克蛋糕; more votes rank higher.
+        assertThat(cafeService.search("巴斯克")).extracting("name").containsExactly("角落", "甜點咖啡");
+        assertThat(cafeService.search("#巴斯克")).extracting("name").containsExactly("角落", "甜點咖啡");
+        assertThat(cafeService.search("巴斯克").getFirst().tags())
+                .extracting("name", "matched")
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple("巴斯克", true),
+                        org.assertj.core.groups.Tuple.tuple("有插座", false));
+        // Several keywords must all match (AND), across tags and names.
+        assertThat(cafeService.search("巴斯克 插座")).extracting("name").containsExactly("角落");
+        assertThat(cafeService.search("巴斯克、咖啡")).extracting("name").containsExactly("甜點咖啡");
+        assertThat(cafeService.search("巴斯克 不存在")).isEmpty();
+        // Names match too, and "%" is literal, not a wildcard.
+        assertThat(cafeService.search("咖啡")).extracting("name").containsExactlyInAnyOrder("甜點咖啡", "安靜咖啡");
+        assertThat(cafeService.search("100%")).extracting("name").containsExactly("100% Coffee");
+        assertThat(cafeService.search("%")).extracting("name").containsExactly("100% Coffee");
+        // Empty query lists everything, newest first.
+        assertThat(cafeService.search("  ")).hasSize(4).first().extracting("name").isEqualTo("100% Coffee");
 
-        mvc.perform(get("/cafes").param("tag", "安靜").with(ALICE))
+        mvc.perform(get("/search").param("q", "巴斯克").with(ALICE))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("安靜咖啡")))
-                .andExpect(content().string(not(containsString("熱鬧咖啡"))));
+                .andExpect(content().string(containsString("角落")))
+                .andExpect(content().string(containsString("甜點咖啡")))
+                .andExpect(content().string(not(containsString("安靜咖啡"))))
+                .andExpect(content().string(containsString("「巴斯克」的結果：2 家")));
+    }
+
+    @Test
+    void oldCafesListRedirectsToSearch() throws Exception {
+        mvc.perform(get("/cafes").with(ALICE)).andExpect(redirectedUrl("/search"));
+        mvc.perform(get("/cafes").param("q", "巴斯克").with(ALICE))
+                .andExpect(redirectedUrl("/search?q=%E5%B7%B4%E6%96%AF%E5%85%8B"));
+    }
+
+    @Test
+    void navShowsHomeCollectionsAndSearch() throws Exception {
+        mvc.perform(get("/search").with(ALICE))
+                .andExpect(content().string(containsString(">首頁</a>")))
+                .andExpect(content().string(containsString(">我的清單</a>")))
+                .andExpect(content().string(containsString(">搜尋</a>")))
+                .andExpect(content().string(not(containsString(">咖啡廳</a>"))))
+                .andExpect(content().string(not(containsString(">附近</a>"))));
     }
 
     // ---------- collections ----------

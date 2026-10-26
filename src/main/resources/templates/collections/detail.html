@@ -11,7 +11,7 @@
 
     <section class="panel">
         <p class="empty" th:if="${collection.items().isEmpty()}">
-            這個清單還是空的。到<a th:href="@{/cafes}">咖啡廳頁面</a>把喜歡的店加進來。
+            這個清單還是空的。到<a th:href="@{/}">首頁</a>或<a th:href="@{/search}">搜尋</a>找喜歡的店加進來。
         </p>
         <ul class="item-list" th:unless="${collection.items().isEmpty()}">
             <li th:each="item : ${collection.items()}">

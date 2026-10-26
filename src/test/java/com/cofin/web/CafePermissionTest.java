@@ -94,7 +94,7 @@ class CafePermissionTest {
                 .andExpect(content().string(containsString("刪除咖啡廳")));
 
         mvc.perform(post("/cafes/" + cafeId + "/delete").with(ALICE).with(csrf()))
-                .andExpect(redirectedUrl("/cafes"));
+                .andExpect(redirectedUrl("/search"));
         assertThat(cafes.findById(cafeId)).isEmpty();
     }
 
@@ -122,7 +122,7 @@ class CafePermissionTest {
         assertThat(cafes.findById(cafeId)).isPresent();
 
         mvc.perform(post("/cafes/" + cafeId + "/delete").with(BOSS).with(csrf()))
-                .andExpect(redirectedUrl("/cafes"));
+                .andExpect(redirectedUrl("/search"));
         assertThat(cafes.findById(cafeId)).isEmpty();
     }
 
@@ -146,8 +146,8 @@ class CafePermissionTest {
 
     @Test
     void adminSeesReviewLinkInNavOthersDoNot() throws Exception {
-        mvc.perform(get("/cafes").with(BOSS)).andExpect(content().string(containsString("/admin/cafes")));
-        mvc.perform(get("/cafes").with(ALICE)).andExpect(content().string(not(containsString("/admin/cafes"))));
+        mvc.perform(get("/search").with(BOSS)).andExpect(content().string(containsString("/admin/cafes")));
+        mvc.perform(get("/search").with(ALICE)).andExpect(content().string(not(containsString("/admin/cafes"))));
     }
 
     @Test

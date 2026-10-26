@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('附近的咖啡廳')}"></head>
+<head th:replace="~{fragments/layout :: head('首頁')}"></head>
 <body class="app-shell">
 <header th:replace="~{fragments/layout :: nav}"></header>
 <main class="explorer" th:classappend="${mapsApiKey == null} ? 'no-map'">
-    <!-- Left: map. maps.js asks for the location as soon as the map loads. -->
-    <div class="explorer-map" th:if="${mapsApiKey}">
-        <div id="explore-map" class="map-canvas" th:data-map-id="${mapsMapId}"></div>
-    </div>
-
-    <!-- Right: list -->
+    <!-- Left: list -->
     <aside class="explorer-list">
         <div th:replace="~{fragments/layout :: flash}"></div>
 
@@ -34,7 +29,7 @@
         <section class="list-section">
             <h2>Co-Fin 熱門</h2>
             <p class="empty" th:if="${popular.isEmpty()}">
-                還沒有熱門的店。<a th:href="@{/cafes}">去幫咖啡廳加標籤或收藏吧</a>
+                還沒有熱門的店。<a th:href="@{/search}">去找咖啡廳加標籤或收藏吧</a>
             </p>
             <ol class="item-list ranked" th:unless="${popular.isEmpty()}">
                 <li th:each="c, stat : ${popular}">
@@ -62,6 +57,11 @@
             </ol>
         </section>
     </aside>
+
+    <!-- Right: map. maps.js asks for the location as soon as the map loads. -->
+    <div class="explorer-map" th:if="${mapsApiKey}">
+        <div id="explore-map" class="map-canvas" th:data-map-id="${mapsMapId}"></div>
+    </div>
 </main>
 <th:block th:replace="~{fragments/layout :: mapsScripts}"></th:block>
 </body>

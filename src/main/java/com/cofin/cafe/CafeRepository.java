@@ -31,11 +31,12 @@ public interface CafeRepository extends JpaRepository<Cafe, Long> {
             """)
     List<Cafe> searchByName(String pattern, Pageable page);
 
+    /** Cafes whose name or any tag contains the (lower-cased, LIKE-escaped) pattern. */
     @Query("""
-            select c from Cafe c
+            select c.id from Cafe c
             where lower(c.name) like :pattern escape '\\'
-              and exists (select ct.id from CafeTag ct where ct.cafe = c and ct.tag.name = :tag)
-            order by c.createdAt desc, c.id desc
+               or exists (select ct.id from CafeTag ct
+                          where ct.cafe = c and ct.tag.name like :pattern escape '\\')
             """)
-    List<Cafe> searchByNameAndTag(String pattern, String tag, Pageable page);
+    List<Long> findIdsMatching(String pattern);
 }

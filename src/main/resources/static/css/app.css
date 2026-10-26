@@ -552,6 +552,28 @@ a.item-title:hover {
     letter-spacing: 1px;
 }
 
+/* ---------- search ---------- */
+
+.search-box {
+    display: flex;
+    gap: 8px;
+}
+
+.search-box input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+    font-size: 1.05rem;
+}
+
+.search-box button {
+    padding-inline: 22px;
+}
+
+.chips.filter {
+    align-items: center;
+}
+
 /* ---------- tag chips ---------- */
 
 .chips {
@@ -633,8 +655,9 @@ body.app-shell {
     grid-template-columns: minmax(0, 1fr);
 }
 
+/* home: list on the left, map on the right */
 .explorer:not(.no-map) {
-    grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr);
+    grid-template-columns: minmax(340px, 1fr) minmax(0, 1.5fr);
 }
 
 .detail.with-map {
@@ -1051,6 +1074,11 @@ body.app-shell {
     .explorer-map,
     .detail-map {
         height: 45vh;
+    }
+
+    /* on phones the map goes on top */
+    .explorer-map {
+        order: -1;
     }
 
     .explorer-list,

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('搜尋')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main class="page">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <div class="page-header">
+        <h1>搜尋</h1>
+        <a class="button small secondary" th:href="@{/cafes/new}">＋ 新增咖啡廳</a>
+    </div>
+
+    <form class="search-box" th:action="@{/search}" method="get" role="search">
+        <input type="search" name="q" th:value="${q}" maxlength="100" autofocus
+               placeholder="用標籤或店名搜尋，例如：巴斯克、有插座" aria-label="搜尋標籤或店名">
+        <button type="submit">搜尋</button>
+    </form>
+    <p class="hint">用空格分開多個關鍵字，會找出全部都符合的店，例如「巴斯克 插座」。</p>
+
+    <div class="chips filter" th:unless="${popularTags.isEmpty()}">
+        <span class="muted small-text">熱門標籤：</span>
+        <a th:each="t : ${popularTags}" class="chip" th:href="@{/search(q=${t.name()})}">
+            <span th:text="'#' + ${t.name()}">tag</span>
+            <span class="count" th:text="${t.count()}">1</span>
+        </a>
+    </div>
+
+    <section class="panel">
+        <h2 th:if="${q.isBlank()}">最新加入的咖啡廳</h2>
+        <h2 th:unless="${q.isBlank()}" th:text="'「' + ${q.strip()} + '」的結果：' + ${results.size()} + ' 家'">結果</h2>
+
+        <p class="empty" th:if="${results.isEmpty()}">
+            找不到符合的咖啡廳。換個關鍵字，或<a th:href="@{/cafes/new}">新增一家</a>。
+        </p>
+        <ul class="item-list" th:unless="${results.isEmpty()}">
+            <li th:each="c : ${results}" th:with="r=${ratings[c.id()]}">
+                <div class="grow">
+                    <a class="item-title" th:href="@{/cafes/{id}(id=${c.id()})}" th:text="${c.name()}">店名</a>
+                    <div class="rating-line" th:if="${r != null}">
+                        <span class="star">★</span>
+                        <span th:text="${#numbers.formatDecimal(r.average(), 1, 1)}">4.5</span>
+                        <span class="muted" th:text="'(' + ${r.count()} + ')'">(3)</span>
+                    </div>
+                    <div class="muted" th:if="${c.address()}" th:text="${c.address()}">地址</div>
+                    <div class="chips" th:unless="${c.tags().isEmpty()}">
+                        <a th:each="t : ${c.tags()}" class="chip" th:classappend="${t.matched()} ? 'active'"
+                           th:href="@{/search(q=${t.name()})}">
+                            <span th:text="'#' + ${t.name()}">tag</span>
+                            <span class="count" th:text="${t.count()}">1</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="stats" th:if="${c.score() > 0}">
+                    <span th:text="${c.score()} + ' 人標記'">3 人標記</span>
+                </div>
+            </li>
+        </ul>
+    </section>
+</main>
+</body>
+</html>

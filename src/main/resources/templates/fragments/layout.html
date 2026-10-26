@@ -15,9 +15,9 @@
 <header th:fragment="nav" class="topbar">
     <a class="brand" th:href="@{/}">☕ Co-Fin</a>
     <nav>
-        <a th:href="@{/}">附近</a>
-        <a th:href="@{/cafes}">咖啡廳</a>
+        <a th:href="@{/}">首頁</a>
         <a th:href="@{/collections}">我的清單</a>
+        <a th:href="@{/search}">搜尋</a>
         <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/cafes}">審核</a>
     </nav>
     <div class="me">
