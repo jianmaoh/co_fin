@@ -660,8 +660,9 @@ body.app-shell {
     grid-template-columns: minmax(340px, 1fr) minmax(0, 1.5fr);
 }
 
+/* cafe page: info on the left, map on the right */
 .detail.with-map {
-    grid-template-columns: minmax(0, 1fr) minmax(380px, 1.2fr);
+    grid-template-columns: minmax(380px, 1.2fr) minmax(0, 1fr);
 }
 
 .explorer-map,
@@ -1077,7 +1078,8 @@ body.app-shell {
     }
 
     /* on phones the map goes on top */
-    .explorer-map {
+    .explorer-map,
+    .detail-map {
         order: -1;
     }
 

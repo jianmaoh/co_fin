@@ -7,20 +7,7 @@
       th:with="hasMap=${mapsApiKey != null and cafe.googlePlaceId() != null}"
       th:classappend="${hasMap} ? 'with-map'">
 
-    <!-- Left: map (only for cafes picked from Google Maps) -->
-    <div class="detail-map" th:if="${hasMap}">
-        <div id="cafe-map" class="map-canvas"
-             th:data-map-id="${mapsMapId}"
-             th:data-place-id="${cafe.googlePlaceId()}"
-             th:data-name="${cafe.name()}"
-             th:data-address="${cafe.address()}"
-             th:data-rating="${rating.count() > 0} ? ${#numbers.formatDecimal(rating.average(), 1, 1)} : ''"
-             th:data-review-count="${rating.count()}"
-             th:data-tags="${#strings.listJoin(cafe.tags().![name()], ',')}"></div>
-        <p id="map-status" class="map-status"></p>
-    </div>
-
-    <!-- Right: info, tags, reviews -->
+    <!-- Left: info, tags, reviews -->
     <div class="detail-body">
         <div th:replace="~{fragments/layout :: flash}"></div>
 
@@ -203,6 +190,19 @@
                 <button type="submit">加入清單</button>
             </form>
         </section>
+    </div>
+
+    <!-- Right: map (only for cafes picked from Google Maps) -->
+    <div class="detail-map" th:if="${hasMap}">
+        <div id="cafe-map" class="map-canvas"
+             th:data-map-id="${mapsMapId}"
+             th:data-place-id="${cafe.googlePlaceId()}"
+             th:data-name="${cafe.name()}"
+             th:data-address="${cafe.address()}"
+             th:data-rating="${rating.count() > 0} ? ${#numbers.formatDecimal(rating.average(), 1, 1)} : ''"
+             th:data-review-count="${rating.count()}"
+             th:data-tags="${#strings.listJoin(cafe.tags().![name()], ',')}"></div>
+        <p id="map-status" class="map-status"></p>
     </div>
 </main>
 

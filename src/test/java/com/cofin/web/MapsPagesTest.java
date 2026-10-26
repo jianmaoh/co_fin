@@ -93,6 +93,16 @@ class MapsPagesTest {
     }
 
     @Test
+    void cafePageHasInfoOnTheLeftAndMapOnTheRight() throws Exception {
+        Long id = cafeService.create("貓下去", "台北市大安區", PLACE_ID, alice.getId()).id();
+
+        String html = mvc.perform(get("/cafes/" + id).with(user("alice")))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(html.indexOf("class=\"detail-body\"")).isPositive()
+                .isLessThan(html.indexOf("class=\"detail-map\""));
+    }
+
+    @Test
     void handTypedCafeHasNoMapAndLoadsNoScript() throws Exception {
         Long id = cafeService.create("手動咖啡", "台北市大安區", alice.getId()).id();
 
